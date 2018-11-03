@@ -1,6 +1,7 @@
 
 from lib.stock_dump import StockDump
 import os
+import time
 
 
 def dump_stock():
@@ -8,6 +9,7 @@ def dump_stock():
     s.logger.info("start")
     s.dump_stock_dynamic(240,15)
     s.zip_dynamic('./data/dynamic')
+    #time.sleep()
     s.upload_dynamic('s3://g1-build/tmp')
 
 

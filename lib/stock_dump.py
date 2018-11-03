@@ -147,19 +147,19 @@ class StockDump():
         #cur_date = datetime.datetime.now().strftime('%Y_%m_%d')
         cur_date = self.last_trading_date.replace("-","_")
         zip_cmd = "%s a dynamic_%s.zip %s"%(self.zip_cmd,cur_date,folder)
-        return subprocess.Popen(zip_cmd,shell=True) 
+        return subprocess.call(zip_cmd,shell=True) 
     
     def upload_dynamic(self,s3_bucket):
         #cur_date = datetime.datetime.now().strftime('%Y_%m_%d')
         cur_date = self.last_trading_date.replace("-","_")
         upload_cmd = "aws s3 cp dynamic_%s.zip %s/dynamic_%s.zip --acl public-read"%(cur_date,s3_bucket,cur_date)
-        return subprocess.Popen(upload_cmd,shell=True)
+        return subprocess.call(upload_cmd,shell=True)
     
     def download_dynamic_from_s3(self,s3_bucket):
         #cur_date = datetime.datetime.now().strftime('%Y_%m_%d')
         cur_date = self.last_trading_date.replace("-","_")
         download_cmd = "aws s3 cp %s/dynamic_%s.zip ."%(s3_bucket,cur_date)
-        return subprocess.Popen(download_cmd,shell=True)
+        return subprocess.call(download_cmd,shell=True)
     
     def download_dynamic_from_url(self):
         #cur_date = datetime.datetime.now().strftime('%Y_%m_%d')
@@ -182,11 +182,11 @@ class StockDump():
         #cur_date = datetime.datetime.now().strftime('%Y_%m_%d')
         cur_date = self.last_trading_date.replace("-","_")
         zip_cmd = "%s x dynamic_%s.zip -o%s -aoa"%(self.zip_cmd,cur_date,folder)
-        return subprocess.Popen(zip_cmd,shell=True) 
+        return subprocess.call(zip_cmd,shell=True) 
 
     def unzip_static(self,folder):
         zip_cmd = "%s x static.zip -o%s -aoa"%(self.zip_cmd,folder)
-        return subprocess.Popen(zip_cmd,shell=True) 
+        return subprocess.call(zip_cmd,shell=True) 
     
     def zip_and_upload(self,folder,s3_bucket):
         pass
