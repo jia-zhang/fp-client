@@ -1,5 +1,6 @@
 
 from lib.stock_dump import StockDump
+import os
 
 
 def dump_stock():
@@ -11,5 +12,9 @@ def dump_stock():
 
 
 if __name__ == '__main__':    
+    if not os.path.exists("./data"):
+        os.makedirs("./data")
+    if not os.path.exists("./data/dynamic"):
+        os.makedirs("./data/dynamic")
     dump_stock()
     
