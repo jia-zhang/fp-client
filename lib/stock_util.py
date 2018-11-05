@@ -3,7 +3,7 @@ import re
 import time
 import os
 import json
-from lib.logger import Logger
+from logger import Logger
 
 class StockUtil():
     def __init__(self):
@@ -68,15 +68,12 @@ class StockUtil():
     def get_dynamic_file_from_id(self,stock_id):
         return "./data/dynamic/%s.json.d"%(stock_id)
     
-    def get_stock_name_from_id(self,stock_id):
-        file_name = self.get_static_file_from_id(stock_id)
-        if not os.path.exists(file_name):
-            return ''
-        f = open(file_name,'r')
-        json_output = json.load(f)
-        f.close()
-        return json_output[stock_id]['stock_name']
-    
+    def check_dynamic_data(self):
+        ret = False
+        if self.get_last_trading_date() == self.get_last_trading_date_from_file():
+            ret = True
+        return ret
+
     def get_stock_list_from_file(self,file_name):
         '''
         从csv文件中获取列表，返回一个数组
@@ -98,7 +95,44 @@ class StockUtil():
         return eval(resp.text.replace('day','"day"').replace('open','"open"').replace('low','"low"').\
         replace('high','"high"').replace('close','"close"').replace('volume','"volume"'))[-1]['day']
     
+    def get_last_trading_date_from_file(self,stock_id='sh000001'):
+        file_name = self.get_dynamic_file_from_id(stock_id)
+        output = self.check_file_and_read(file_name)
+        stock_detail = eval(output)
+        return stock_detail[-1]['day']
+
+    def get_live_status(self,stock_id):
+        ret = ""
+        url = "http://hq.sinajs.cn/list=%s"%(stock_id)
+        r = requests.get(url)
+        if r.status_code != 200:
+            return ret
+        re_info = re.compile(r'="(.*)"')
+        ret = re_info.findall(r.text)[0]
+        return ret
     
+    def get_live_price(self,stock_id):
+        info = self.get_live_status(stock_id).split(',')
+        return info[3]  
+    
+    def get_live_aoi(self,stock_id):
+        info = self.get_live_status(stock_id).split(',')
+        cur_price = float(info[3])
+        last_day_price = float(info[2])
+        return (cur_price-last_day_price)*100/last_day_price  
+    
+    def get_stock_name_from_id(self,stock_id):
+        info = self.get_live_status(stock_id).split(',')
+        return info[0] 
+    
+    def get_stock_name_from_id_old(self,stock_id):
+        file_name = self.get_static_file_from_id(stock_id)
+        if not os.path.exists(file_name):
+            return ''
+        f = open(file_name,'r')
+        json_output = json.load(f)
+        f.close()
+        return json_output[stock_id]['stock_name']
     
     def get_delta(self,stock_id,day_num):
         '''
@@ -212,7 +246,7 @@ class StockUtil():
             self.logger.info("stock_id: %s,float_share is zero"%(stock_id))
         return ret
     
-    def add_propery(self,stock_id,property_dict):
+    def add_property(self,stock_id,property_dict):
         '''
         为某股票添加一个新的字段，会改写股票的static文件。
         #t.add_propery('sh600000',{"tag1":{"ddd":"ccc"}})    
@@ -243,5 +277,8 @@ class StockUtil():
 
 if __name__ == '__main__':
     t = StockUtil()
-    print(t.get_suspend_stocks())
+    print(t.check_dynamic_data())
+    #print(t.get_stock_name_from_id('sz000002'))
+    #print(t.get_suspend_stocks())
+    #print(t.get_live_price('sz000673'))
     #print(t.get_increase_amount('sz000002',0))

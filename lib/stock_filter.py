@@ -4,8 +4,8 @@ import time
 import os
 import json
 import pdb
-from lib.stock_util import StockUtil
-from lib.logger import Logger
+from stock_util import StockUtil
+from logger import Logger
 
 class StockFilter():
     def __init__(self):

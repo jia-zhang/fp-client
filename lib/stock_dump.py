@@ -8,8 +8,8 @@ import random
 import datetime
 import subprocess
 import sys
-from lib.logger import Logger
-from lib.stock_util import StockUtil
+from logger import Logger
+from stock_util import StockUtil
 
 class StockDump():
     def __init__(self):
