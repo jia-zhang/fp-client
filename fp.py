@@ -42,11 +42,15 @@ def analyze():
     print(s_list)
     
     #只取3天内总换手>30%的
-    #s_list = a.get_volume_within_days(s_list,3,30)
-    #print(s_list)
+    s_list = f.get_volume_within_days(s_list,3,5)
+    print(s_list)
 
     #去掉3天内有大阴线形态2的
-    s_list = f.filter_big_lift_within_days(s_list,2,-6)
+    s_list = f.filter_big_lift_within_days(s_list,2,-5)
+    print(s_list)
+
+    #去掉涨幅变小的
+    s_list = f.filter_increase_rate_decrease(s_list,3,3)
     print(s_list)
 
     #2天前到现在涨幅>5%
@@ -60,13 +64,14 @@ def test():
     print(t.check_dynamic_data())
 
 if __name__ == '__main__':    
-    prepare_env()
+    #prepare_env()
     #test()
     #pre_analyze()
-    '''
+    
     t = StockUtil()
     s_list = analyze()
+    
     for s in s_list:
         print("%s-%s:%s"%(s,t.get_stock_name_from_id(s),t.get_live_aoi(s)))
-    '''
+    
     
