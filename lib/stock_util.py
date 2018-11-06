@@ -85,6 +85,12 @@ class StockUtil():
             output = f.read()
         return output.split(',')
     
+    def save_stock_list_to_file(self,stock_list):
+        file_name = "./output/%s.csv"%(self.last_trading_day.replace('-','_'))
+        s_list_str = ','.join(stock_list)
+        with open(file_name,'w') as f:
+            f.write(s_list_str)
+    
     def get_last_trading_date(self):
         '''
         获取最近一次的交易日。获取上证指数的最后交易数据即可。
