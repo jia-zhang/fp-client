@@ -3,6 +3,7 @@ sys.path.append("./lib")
 sys.path.append(".")
 from stock_filter import StockFilter
 from stock_util import StockUtil
+from stock_mailer import StockMailer
 import time
 
 def analyze():
@@ -17,8 +18,8 @@ def analyze():
     print(s_list)
     
     #只取3天内总换手>30%的
-    s_list = f.get_volume_within_days(s_list,3,5)
-    print(s_list)
+    #s_list = f.get_volume_within_days(s_list,3,5)
+    #print(s_list)
 
     #去掉3天内有大阴线形态2的
     s_list = f.filter_big_lift_within_days(s_list,2,-5)
