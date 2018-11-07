@@ -7,15 +7,6 @@ from stock_mailer import StockMailer
 import time
 import datetime
 
-def get_yesterday(): 
-    today=datetime.date.today() 
-    oneday=datetime.timedelta(days=1) 
-    yesterday=today-oneday  
-    return yesterday.strftime('%Y_%m_%d')
-
-def get_today():
-    return datetime.date.today().strftime('%Y_%m_%d')
-
 def analyze():
     '''
     To save time, please run pre_analyze first...
@@ -48,12 +39,13 @@ def fp():
     t = StockUtil()
     s_list = analyze()    
     for s in s_list:
-        print("%s-%s:%s"%(s,t.get_stock_name_from_id(s),t.get_live_aoi(s)))    
-    t.save_stock_list_to_file(s_list)
+        print("%s-%s:%s"%(s,t.get_stock_name_from_id(s),t.get_live_aoi(s)))  
+    file_name = "./output/fp_%s.csv"%(t.get_today())  
+    t.save_stock_list_to_file(s_list,file_name)
 
 def send_fp_mail():
     m = StockMailer()
-    today = get_today()
+    today = self.util.get_today()
     msg_subject = "FP info - %s"%(today)
     input_file_name = "output/fp_%s.csv"%(today)
     with open(input_file_name,'r') as f:
@@ -62,9 +54,9 @@ def send_fp_mail():
 
 
 if __name__ == '__main__':    
-    #fp()
+    fp()
     #time.sleep(30)
-    send_fp_mail()
+    #send_fp_mail()
 
     
     

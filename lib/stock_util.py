@@ -4,6 +4,7 @@ import time
 import os
 import json
 from logger import Logger
+import datetime
 
 class StockUtil():
     def __init__(self):
@@ -11,6 +12,36 @@ class StockUtil():
         self.valid_stock_file = "valid_stock.csv"
         self.last_trading_day = self.get_last_trading_date()
         pass
+    
+    def is_bid_time(self):
+        t = datetime.datetime.now()
+        if t.hour==9 and t.minute>=20 and t.minute<=25:
+            return True
+        return False 
+    
+    def is_trading_time(self):
+        t = datetime.datetime.now()
+        if t.hour<9 or t.hour>15 or t.hour==12:
+            return False
+        if t.hour==9 and t.minute<30:
+            return False
+        if t.hour==11 and t.minute>30:
+            return False
+        return True
+        
+
+    def get_yesterday(self): 
+        today=datetime.date.today() 
+        oneday=datetime.timedelta(days=1) 
+        yesterday=today-oneday  
+        return yesterday.strftime('%Y_%m_%d')
+
+    def get_today(self):
+        return datetime.date.today().strftime('%Y_%m_%d')
+    
+    def get_fp_stock_list(self):
+        fp_file = "output/fp_%s.csv"%(self.get_yesterday())
+        return self.get_stock_list_from_file(fp_file)
     
     def get_valid_stocks(self):
         return self.get_stock_list_from_file(self.valid_stock_file)
@@ -85,8 +116,8 @@ class StockUtil():
             output = f.read()
         return output.split(',')
     
-    def save_stock_list_to_file(self,stock_list):
-        file_name = "./output/fp_%s.csv"%(self.last_trading_day.replace('-','_'))
+    def save_stock_list_to_file(self,stock_list,file_name):
+        #file_name = "./output/fp_%s.csv"%(self.last_trading_day.replace('-','_'))
         s_list_str = ','.join(stock_list)
         with open(file_name,'w') as f:
             f.write(s_list_str)
@@ -124,14 +155,27 @@ class StockUtil():
         cur_price = float(info[3])
         last_day_price = float(info[2])
         open_price = float(info[1])
-        aoi = (cur_price-last_day_price)*100/last_day_price
-        aoi_open = (open_price-last_day_price)*100/last_day_price
-        ret = "%s:%s:%s:[%s]:%s:%s:[%s]"%(stock_id,info[0],info[3],aoi,info[8],info[9],aoi_open)
+        aoi = round((cur_price-last_day_price)*100/last_day_price,2)
+        aoi_open = round((open_price-last_day_price)*100/last_day_price,2)
+        volume = round(float(info[8])/1000000,2)
+        rmb = round(float(info[9])/100000000,2)
+        ret = "%s(%s) | %s%% | %s%% | %s | %s | %s"%(info[0],stock_id,aoi_open,aoi,info[3],volume,rmb)
         return ret
+    
+    def get_live_mon_items_bid(self,stock_id):
+        info = self.get_live_status(stock_id).split(',')
+        cur_price = float(info[11])
+        last_day_price = float(info[2])
+        #open_price = float(info[1])
+        aoi = round((cur_price-last_day_price)*100/last_day_price,2)
+        #aoi_open = (open_price-last_day_price)*100/last_day_price
+        ret = "%s(%s) | %s | %s | %s"%(info[0],stock_id,aoi,round(cur_price,2),info[10])
+        return ret       
 
     def get_live_status(self,stock_id):
         ret = ""
         url = "http://hq.sinajs.cn/list=%s"%(stock_id)
+        #self.logger.info(url)
         r = requests.get(url)
         if r.status_code != 200:
             return ret
@@ -147,7 +191,7 @@ class StockUtil():
         info = self.get_live_status(stock_id).split(',')
         cur_price = float(info[3])
         last_day_price = float(info[2])
-        return (cur_price-last_day_price)*100/last_day_price  
+        return round((cur_price-last_day_price)*100/last_day_price,2)  
     
     def get_stock_name_from_id(self,stock_id):
         info = self.get_live_status(stock_id).split(',')

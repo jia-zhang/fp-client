@@ -23,7 +23,7 @@ def summarize():
     t = StockUtil()
     s_list = t.get_stock_list_from_file(file_name)
     f = open(output_file_name,'w')
-    f.write("股票ID，股票名称，当前价格，涨幅，成交手数，成交金额，开盘涨幅\n")
+    f.write("股票名称（股票ID）| 开盘涨幅 | 当前涨幅 | 当前价格 | 成交量（万手）| 成交金额（亿）\n")
     for s in s_list:
         info = t.get_live_mon_items(s)
         f.write(info)
@@ -43,4 +43,4 @@ if __name__ == '__main__':
     #monitor(file_name,60)
     #monitor_after_bid(file_name,60)
     summarize()
-    send_sum_mail()
+    #send_sum_mail()
