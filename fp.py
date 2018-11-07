@@ -52,8 +52,8 @@ def send_fp_mail():
 
 
 if __name__ == '__main__':    
-    fp()
-    time.sleep(30)
+    #fp()
+    #time.sleep(30)
     send_fp_mail()
 
     
