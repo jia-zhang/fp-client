@@ -1,4 +1,6 @@
-
+import sys
+sys.path.append("./lib")
+sys.path.append(".")
 from lib.stock_dump import StockDump
 import os
 import time
