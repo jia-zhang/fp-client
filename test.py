@@ -1,60 +1,29 @@
+import smtplib
+from email.mime.text import MIMEText
+from email.utils import formataddr
 
-import sys
-sys.path.append("./lib")
-sys.path.append(".")
-from stock_dump import StockDump
-from stock_filter import StockFilter
-from stock_util import StockUtil
-from stock_trade import StockTrade
+my_sender='3100820192@qq.com'    # 发件人邮箱账号
+my_pass = 'hymygengdhnydhfd'              # 发件人邮箱密码(当时申请smtp给的口令)
+my_user='jenixe@126.com'      # 收件人邮箱账号，我这边发送给自己
+def mail():
+    ret=True
+    try:
+        msg=MIMEText('填写邮件内容','plain','utf-8')
+        msg['From']=formataddr(["发件人昵称",my_sender])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
+        msg['To']=formataddr(["收件人昵称",my_user])              # 括号里的对应收件人邮箱昵称、收件人邮箱账号
+        msg['Subject']="邮件主题-测试"                # 邮件的主题，也可以说是标题
 
-def prepare_env():
-    s = StockDump()
-    s.logger.info("Downloading all valid stock information...")
-    #s.download_valid_stock_list()
-    s.logger.info("Downloading stock dynamic data...")
-    s.download_dynamic_from_url()
-    s.logger.info("Downloading stock static data...")
-    #s.download_static_from_url()
-    s.logger.info("Unzipping files...")    
-    s.unzip_dynamic('./data')
-    #s.unzip_static('./data')
+        server=smtplib.SMTP_SSL("smtp.qq.com", 465)  # 发件人邮箱中的SMTP服务器，端口是465
+        server.login(my_sender, my_pass)  # 括号中对应的是发件人邮箱账号、邮箱密码
+        server.sendmail(my_sender,[my_user,],msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
+        server.quit()# 关闭连接
+    except Exception:# 如果 try 中的语句没有执行，则会执行下面的 ret=False
+        print("aaabbb")
+        ret=False
+    return ret
 
-def pre_analyze():
-    file_name = "pre_list.csv"
-    f = StockFilter()
-    s_list = f.util.get_trading_stocks()
-    s_list = f.get_big_increase_within_days(s_list,5,9)
-    if len(s_list)>0:
-        result = ','.join(s_list)
-    with open(file_name,'w') as f:
-        f.write(result)
-    #print(s_list)
-
-def analyze():
-    '''
-    To save time, please run pre_analyze first...
-    '''
-    file_name = "pre_list.csv"
-    f = StockFilter()
-    s_list = ['sz000633']
-    #去掉涨幅变小的
-    s_list = f.filter_increase_rate_decrease(s_list,3)
-    print(s_list)
-    
-
-def test():
-    t = StockUtil()
-    print(t.check_dynamic_data())
-
-if __name__ == '__main__':    
-    #prepare_env()
-    #test()
-    #pre_analyze()
-    
-    t = StockUtil()
-    s_list = analyze()
-    print(s_list)
-    #for s in s_list:
-    #    print("%s-%s:%s"%(s,t.get_stock_name_from_id(s),t.get_live_aoi(s)))
-    
-    
+ret=mail()
+if ret:
+    print("邮件发送成功")
+else:
+    print("邮件发送失败")

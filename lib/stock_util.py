@@ -106,6 +106,28 @@ class StockUtil():
         output = self.check_file_and_read(file_name)
         stock_detail = eval(output)
         return stock_detail[-1]['day']
+    
+    def get_live_status_list(self,stock_list):
+        s_list_str = ','.join(stock_list)
+        ret = ""
+        url = "http://hq.sinajs.cn/list=%s"%(s_list_str)
+        r = requests.get(url)
+        if r.status_code != 200:
+            return ret
+        #re_info = re.compile(r'="(.*)"')
+        #ret = re_info.findall(r.text)[0]
+        ret = r.text
+        return ret
+
+    def get_live_mon_items(self,stock_id):
+        info = self.get_live_status(stock_id).split(',')
+        cur_price = float(info[3])
+        last_day_price = float(info[2])
+        open_price = float(info[1])
+        aoi = (cur_price-last_day_price)*100/last_day_price
+        aoi_open = (open_price-last_day_price)*100/last_day_price
+        ret = "%s:%s:%s:[%s]:%s:%s:[%s]"%(stock_id,info[0],info[3],aoi,info[8],info[9],aoi_open)
+        return ret
 
     def get_live_status(self,stock_id):
         ret = ""
