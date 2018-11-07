@@ -5,6 +5,7 @@ from stock_filter import StockFilter
 from stock_util import StockUtil
 from stock_mailer import StockMailer
 import time
+import datetime
 
 def get_yesterday(): 
     today=datetime.date.today() 
