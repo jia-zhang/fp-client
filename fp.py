@@ -6,6 +6,15 @@ from stock_util import StockUtil
 from stock_mailer import StockMailer
 import time
 
+def get_yesterday(): 
+    today=datetime.date.today() 
+    oneday=datetime.timedelta(days=1) 
+    yesterday=today-oneday  
+    return yesterday.strftime('%Y_%m_%d')
+
+def get_today():
+    return datetime.date.today().strftime('%Y_%m_%d')
+
 def analyze():
     '''
     To save time, please run pre_analyze first...
