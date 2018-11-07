@@ -86,7 +86,7 @@ class StockUtil():
         return output.split(',')
     
     def save_stock_list_to_file(self,stock_list):
-        file_name = "./output/%s.csv"%(self.last_trading_day.replace('-','_'))
+        file_name = "./output/fp_%s.csv"%(self.last_trading_day.replace('-','_'))
         s_list_str = ','.join(stock_list)
         with open(file_name,'w') as f:
             f.write(s_list_str)
