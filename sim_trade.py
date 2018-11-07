@@ -10,6 +10,10 @@ from stock_filter import StockFilter
 from stock_util import StockUtil
 from stock_trade import StockTrade
 
+def trade(stock_list):
+    pass
+    
 
 if __name__ == '__main__':   
+
     pass

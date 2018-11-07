@@ -17,7 +17,7 @@ def get_today():
 
 def summarize():
     yesterday = get_yesterday()
-    file_name = "output/%s.csv"%(yesterday)
+    file_name = "output/fp_%s.csv"%(yesterday)
     today = get_today()
     output_file_name = "output/summary_%s.csv"%(today)
     t = StockUtil()
