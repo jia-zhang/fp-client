@@ -4,16 +4,16 @@ from email.utils import formataddr
 import datetime
 
 class StockMailer():
-    def __init__():
+    def __init__(self):
         self.my_sender='3100820192@qq.com'    # 发件人邮箱账号
         self.my_pass = 'hymygengdhnydhfd'              # 发件人邮箱密码(当时申请smtp给的口令)
         self.date = datetime.datetime.now().strftime('%Y_%m_%d')
         pass
     
-    def send_mail(rcpt_list):
+    def send_mail(self,rcpt_list):
         pass
     
-    def send_mail_to_one_rcpt(rcpt,msg_subject,msg_body):
+    def send_mail_to_one_rcpt(self,rcpt,msg_subject,msg_body):
         ret=True
         try:
             msg=MIMEText(msg_body,'plain','utf-8')
