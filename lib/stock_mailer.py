@@ -19,7 +19,7 @@ class StockMailer():
         today = self.util.get_today()
         msg_subject = "%s 复盘结果"%(today)
         stock_status = self.util.get_summary_status_after_close(stock_list)    
-        msg_body = stock_status.join("\n")
+        msg_body = "\n".join(stock_status)
         self.logger.info(msg_body)
         for rcpt in self.rcpt_list:
             self.send_mail_to_one_rcpt(rcpt,msg_subject,msg_body)
