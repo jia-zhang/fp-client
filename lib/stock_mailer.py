@@ -11,8 +11,8 @@ class StockMailer():
         self.my_sender='3100820192@qq.com'    # 发件人邮箱账号
         self.my_pass = 'hymygengdhnydhfd'              # 发件人邮箱密码(当时申请smtp给的口令)
         self.date = datetime.datetime.now().strftime('%Y/%m/%d')
-        self.rcpt_list = ["jenixe@126.com"]
-        #self.rcpt_list = ["jenixe@126.com","286531599@qq.com","jenixg@gmail.com"]
+        #self.rcpt_list = ["jenixe@126.com"]
+        self.rcpt_list = ["jenixe@126.com","286531599@qq.com"]
         self.util = StockUtil()
         self.mail_server = '127.0.0.1'
         self.mail_port = 25
@@ -24,14 +24,16 @@ class StockMailer():
     
     def compose_msg_body(self,stock_list):
         self.add_msg_body('=======================')
-        stock_status = self.util.get_summary_status_after_close(stock_list)
+        stock_status = "\n".join(self.util.get_summary_status_after_close(stock_list))
         self.msg_body_list.append(stock_status)
         self.add_msg_body('=======================\n')
 
     def send_fp_mail(self):
         today = self.util.get_today()
         msg_subject = "复盘结果"
-        #stock_status = self.util.get_summary_status_after_close(stock_list)    
+        #stock_status = self.util.get_summary_status_after_close(stock_list)  
+        print(type(self.msg_body_list))
+        print(self.msg_body_list)  
         msg_body = "\n".join(self.msg_body_list)
         self.logger.info(msg_body)
         for rcpt in self.rcpt_list:
