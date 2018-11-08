@@ -280,7 +280,7 @@ class StockUtil():
         #print(price_start)        
         price_end = float(stock_detail[-1-day_num]['close'])
         #print(price_end)
-        lift_status = (price_end-price_high)*100/price_high
+        lift_status = round((price_end-price_high)*100/price_high,2)
         return lift_status
 
 
@@ -316,7 +316,7 @@ class StockUtil():
         ret = 0
         for d in range(day_num):
             ret = ret + self.get_volume(stock_id,d)
-        return ret
+        return round(ret,2)
     
     def get_volume(self,stock_id,day_num):
         '''
