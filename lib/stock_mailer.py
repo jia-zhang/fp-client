@@ -34,7 +34,7 @@ class StockMailer():
         #for rcpt in rcpt_list:
         pass
 
-    def send_mail_from_local_to_one_rcpt(self,rcpt,msg_subject,msg_body):
+    def send_mail_from_local(self,rcpt,msg_subject,msg_body):
         ret=True
         try:
             msg=MIMEText(msg_body,'plain','utf-8')
@@ -51,7 +51,7 @@ class StockMailer():
         return ret
     
     
-    def send_mail_to_one_rcpt_from_qq(self,rcpt,msg_subject,msg_body):
+    def send_mail_from_qq(self,rcpt,msg_subject,msg_body):
         ret=True
         try:
             msg=MIMEText(msg_body,'plain','utf-8')
@@ -67,7 +67,7 @@ class StockMailer():
             ret=False
         return ret
 
-    def send_mail_to_one_rcpt_from_gmail(self,rcpt,msg_subject,msg_body):
+    def send_mail_from_gmail(self,rcpt,msg_subject,msg_body):
         ret=True
         try:
             msg=MIMEText(msg_body,'plain','utf-8')
@@ -83,7 +83,7 @@ class StockMailer():
             ret=False
         return ret
     
-    def send_mail_to_one_rcpt_from_126(self,rcpt,msg_subject,msg_body):
+    def send_mail_from_126(self,rcpt,msg_subject,msg_body):
         ret=True
         try:
             msg=MIMEText(msg_body,'plain','utf-8')
@@ -98,9 +98,25 @@ class StockMailer():
             #print("aaabbb")
             ret=False
         return ret
+    
+    def send_mail_from_ses(self,rcpt,msg_subject,msg_body):
+        ret=True
+        try:
+            msg=MIMEText(msg_body,'plain','utf-8')
+            msg['From']=formataddr(["jiazzz","jenixg@gmail.com"])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
+            msg['To']=formataddr(["whoareyou",rcpt])              # 括号里的对应收件人邮箱昵称、收件人邮箱账号
+            msg['Subject']="%s-%s"%(msg_subject,self.date)                # 邮件的主题，也可以说是标题
+            server=smtplib.SMTP_SSL("email-smtp.us-east-1.amazonaws.com", 465)  # 发件人邮箱中的SMTP服务器，端口是465
+            server.login("AKIAJ2Z7MJOL6TNGN6QA", "AqCyiM2iMvMSxHwZbD/vsgIR0001RXodmfYSSjEOlqWx")  # 括号中对应的是发件人邮箱账号、邮箱密码
+            server.sendmail(self.my_sender,[rcpt,],msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
+            server.quit()# 关闭连接
+        except Exception:# 如果 try 中的语句没有执行，则会执行下面的 ret=False
+            #print("aaabbb")
+            ret=False
+        return ret
 
 if __name__ == '__main__':
     t = StockMailer()
-    t.send_mail_to_one_rcpt_from_126('jenixg@gmail.com','test','this is a test mail')
+    t.send_mail_from_ses('jenixe@126.com','test','this is a test mail')
 
 
