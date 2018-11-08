@@ -70,7 +70,8 @@ def fp1():
     m.compose_msg_body(top_n_list)
     m.add_msg_body("潜力股列表：")
     m.compose_msg_body(potential_list)
-    print(m.msg_body_list)
+    #print(m.msg_body_list)
+    m.send_fp_mail()
 
 if __name__ == '__main__':    
     #fp()
