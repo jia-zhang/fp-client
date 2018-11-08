@@ -9,12 +9,22 @@ class StockMon():
         pass
     
     def monitor_bid(self,stock_list,refresh_interval):
+        sample = {}
+        for s in stock_list:
+            aoi = self.util.get_live_aoi_bid(s)
+            sample[s] = aoi
         while True:
             self.logger.info("================Monitor==============")
-            self.logger.info("股票名称（股票ID）| 涨幅 | 竞买价 | 竞买量")
+            self.logger.info("股票名称（股票ID）| 涨幅 | 竞买价 | 竞买量")            
             for s in stock_list:
                 status = self.util.get_live_mon_items_bid(s)
-                self.logger.info(status)    
+                self.logger.info(status) 
+                aoi = self.util.get_live_aoi_bid(s)   
+                if aoi-sample[s]>2:
+                    self.logger.info("Stock %s aoi increased from %s to %s"%(s,sample[s],aoi))
+                elif aoi-sample[s]<-2:
+                    self.logger.info("Stock %s aoi dropped from %s to %s"%(s,sample[s],aoi))
+                sample[s] = aoi
             time.sleep(refresh_interval)
 
     def monitor_after_bid(self,stock_list,refresh_interval):
@@ -28,5 +38,5 @@ class StockMon():
 if __name__ == '__main__':
     t = StockMon()
     s_list = ['sz000002','sh600000']
-    t.monitor_bid(s_list,5)
+    t.monitor_bid(s_list,20)
     #t.monitor_after_bid(s_list,5)

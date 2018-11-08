@@ -187,6 +187,12 @@ class StockUtil():
         info = self.get_live_status(stock_id).split(',')
         return info[3]  
     
+    def get_live_aoi_bid(self,stock_id):
+        info = self.get_live_status(stock_id).split(',')
+        cur_price = float(info[11])
+        last_day_price = float(info[2])
+        return round((cur_price-last_day_price)*100/last_day_price,2) 
+    
     def get_live_aoi(self,stock_id):
         info = self.get_live_status(stock_id).split(',')
         cur_price = float(info[3])
