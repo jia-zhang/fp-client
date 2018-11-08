@@ -55,7 +55,7 @@ class StockMailer():
         ret=True
         try:
             msg=MIMEText(msg_body,'plain','utf-8')
-            msg['From']=formataddr(["jiazzz",self.my_sender])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
+            msg['From']=formataddr(["jiazzz",'3100820192@qq.com'])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
             msg['To']=formataddr(["whoareyou",rcpt])              # 括号里的对应收件人邮箱昵称、收件人邮箱账号
             msg['Subject']="%s-%s"%(msg_subject,self.date)                # 邮件的主题，也可以说是标题
             server=smtplib.SMTP_SSL("smtp.qq.com", 465)  # 发件人邮箱中的SMTP服务器，端口是465
@@ -117,6 +117,6 @@ class StockMailer():
 
 if __name__ == '__main__':
     t = StockMailer()
-    t.send_mail_from_ses('jenixe@126.com','test','this is a test mail')
+    t.send_mail_from_qq('jenixe@126.com','test','this is a test mail')
 
 
