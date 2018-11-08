@@ -11,7 +11,7 @@ class StockMailer():
         self.my_pass = 'hymygengdhnydhfd'              # 发件人邮箱密码(当时申请smtp给的口令)
         self.date = datetime.datetime.now().strftime('%Y_%m_%d')
         #self.rcpt_list = "286531599@qq.com,jenixe@126.com"
-        self.rcpt_list = "jenixe@126.com"
+        self.rcpt_list = ["jenixe@126.com"]
         self.util = StockUtil()
         self.logger = Logger("StockMailer")
 

@@ -342,7 +342,7 @@ class StockUtil():
         if(gb==0):
             self.logger.info("stock_id: %s,float_share is zero"%(stock_id))
         try:
-            ret = round(volume*100/float(gb),2)
+            ret = volume*100/float(gb)
         except:
             self.logger.info("stock_id: %s,float_share is zero"%(stock_id))
         return ret
@@ -378,7 +378,8 @@ class StockUtil():
 
 if __name__ == '__main__':
     t = StockUtil()
-    print(t.check_dynamic_data())
+    #print(t.get_volume('sz000002',0))
+    print(t.get_volume_sum('sz000002',3))
     #print(t.get_stock_name_from_id('sz000002'))
     #print(t.get_suspend_stocks())
     #print(t.get_live_price('sz000673'))
