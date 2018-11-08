@@ -28,9 +28,7 @@ class StockFilter():
         '''      
         ret = []
         for s in stock_list:
-            volume = 0
-            for i in range(day_num):
-                volume = volume+self.util.get_volume(s,i)
+            volume = self.util.get_volume_sum(s,day_num)
             if volume>=volume_critiria:
                 #self.logger.info("%s:%s"%(self.util.get_stock_name_from_id(s),volume))
                 ret.append(s)

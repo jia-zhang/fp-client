@@ -137,6 +137,20 @@ class StockUtil():
         output = self.check_file_and_read(file_name)
         stock_detail = eval(output)
         return stock_detail[-1]['day']
+
+    def get_summary_status_after_close(self,stock_list):
+        ret = []
+        title = "股票名称（股票ID）| 开盘涨幅 | 当前涨幅 | 当前价格 | 成交量（万手）| 成交金额（亿）| 3日涨幅 | 3日总换手 | 当日高点差"
+        ret.append(title)
+        for s in stock_list:
+            status = self.get_live_mon_items(s)
+            delta = self.get_delta(s,3)
+            volume_sum = self.get_volume_sum(s,3)
+            lift = self.get_lift_in_one_day(s,0)
+            status_plus = " | %s | %s | %s"%(delta,volume_sum,lift)
+            ret.append("%s%s"%(status,status_plus))
+        return ret
+        
     
     def get_live_status_list(self,stock_list):
         s_list_str = ','.join(stock_list)
@@ -212,6 +226,9 @@ class StockUtil():
         f.close()
         return json_output[stock_id]['stock_name']
     
+    
+
+    
     def get_delta(self,stock_id,day_num):
         '''
         获取day_num天前到目前收盘价的delta值，以%表示。
@@ -237,7 +254,7 @@ class StockUtil():
         #print(price_start)        
         price_end = float(stock_detail[-1]['close'])
         #print(price_end)
-        lift_status = (price_end-price_start)*100/price_start
+        lift_status = round((price_end-price_start)*100/price_start,2)
         return lift_status
     
     def get_lift_in_one_day(self,stock_id,day_num):
@@ -294,6 +311,12 @@ class StockUtil():
         #print(price_end)
         lift_status = (price_end-price_start)*100/price_start
         return lift_status
+
+    def get_volume_sum(self,stock_id,day_num):
+        ret = 0
+        for d in range(day_num):
+            ret = ret + self.get_volume(stock_id,d)
+        return ret
     
     def get_volume(self,stock_id,day_num):
         '''
@@ -319,7 +342,7 @@ class StockUtil():
         if(gb==0):
             self.logger.info("stock_id: %s,float_share is zero"%(stock_id))
         try:
-            ret = volume*100/float(gb)
+            ret = round(volume*100/float(gb),2)
         except:
             self.logger.info("stock_id: %s,float_share is zero"%(stock_id))
         return ret

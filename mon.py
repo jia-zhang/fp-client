@@ -8,7 +8,12 @@ import time
 def mon():
     m = StockMon()
     s_list = m.util.get_fp_stock_list()
-    m.monitor_bid(s_list,5)
+    if m.util.is_bid_time():
+        m.logger.info("Bid time...")
+        m.monitor_bid(s_list,20)
+    elif m.util.is_trading_time():
+        m.logger.info("Trading time...")
+        m.monitor_after_bid(s_list,20)
 
 if __name__ == '__main__':  
     mon()

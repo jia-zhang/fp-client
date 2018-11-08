@@ -33,7 +33,8 @@ class StockMon():
             self.logger.info("股票名称（股票ID）| 开盘涨幅 | 当前涨幅 | 当前价格 | 成交量（万手）| 成交金额（亿）")
             for s in stock_list:
                 self.logger.info(self.util.get_live_mon_items(s))
-            time.sleep(refresh_interval)
+            time.sleep(refresh_interval)    
+
 
 if __name__ == '__main__':
     t = StockMon()
