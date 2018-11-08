@@ -23,6 +23,7 @@ class StockMailer():
         msg_body = "\n".join(stock_status)
         self.logger.info(msg_body)
         for rcpt in self.rcpt_list:
+            self.logger.info("Sending mail to %s"%(rcpt))
             self.send_mail_to_one_rcpt(rcpt,msg_subject,msg_body)
             time.sleep(5)
     
