@@ -155,6 +155,16 @@ class StockUtil():
             status_plus = " | %s | %s | %s"%(delta,volume_sum,lift)
             ret.append("%s%s"%(status,status_plus))
         return ret
+
+    def get_market_status(self,direction,numbers):
+        detail_url = "http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?\
+        page=1&num=%s&sort=changepercent&asc=%s&node=hs_a&symbol=&_s_r_a=init"%(numbers,direction)
+        resp = requests.get(detail_url)
+        return eval(resp.text.replace('symbol','"symbo"').replace('code','"code"').replace('name','"name"').replace('trade','"trade"').\
+        replace('pricechange','"pricechange"').replace('changepercent','"changepercent"').replace('buy','"buy"').replace('sell','"sell"').\
+        replace('settlement','"settlement"').replace('open','"open"').replace('high','"high"').replace('low','"low"').\
+        replace('volume','"volume"').replace('amount','"amount"').replace('ticktime','"ticktime"').replace('per:','"per":').\
+        replace('pb','"pb"').replace('mktcap','"mktcap"').replace('nmc','"nmc"').replace('turnoverratio','"turnoverratio"'))
         
     
     def get_live_status_list(self,stock_list):
@@ -429,7 +439,9 @@ class StockUtil():
 if __name__ == '__main__':
     t = StockUtil()
     #print(t.get_volume('sz000002',0))
-    print(t.get_volume_sum('sh600290',3))
+    #print(t.get_volume_sum('sh600290',3))
+    #print(len(t.get_market_status(0,200)))
+    print(t.get_market_status(1,200))
     #print(t.get_stock_name_from_id('sz000002'))
     #print(t.get_suspend_stocks())
     #print(t.get_live_price('sz000673'))
