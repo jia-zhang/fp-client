@@ -248,8 +248,36 @@ class StockUtil():
                 self.logger.info("Stock %s big lift(%s)>criteria(%s)...lift day: %s"%(stock_id,lift,lift_criteria,day))
                 ret = True
         return ret
-
-
+    
+    def is_volume_increase_within_days(self,stock_id,day_num,increase_criteria=1.1):
+        ret = True
+        for day in range(day_num):            
+            volume = self.get_volume(stock_id,day)
+            if day==0 or round(last_day_volume/volume,2)>increase_criteria:
+                last_day_volume = volume
+                continue
+            else:
+                self.logger.info("Stock %s volume(%s) in day %s > last day volume(%s),please check..."%(stock_id,volume,day,last_day_volume))
+                ret = 0
+                break
+        return ret
+    
+    def is_volume_increase_within_days_2(self,stock_id,day_num,increase_criteria=2):
+        ret = False
+        for day in range(day_num):            
+            volume = self.get_volume(stock_id,day)
+            if day==0:
+                last_day_volume = volume                
+                continue
+            elif round(last_day_volume/volume,2)>increase_criteria:
+                self.logger.info("Found stock %s last day volume(%s)/volume(%s) in day %s > %s..."%(stock_id,last_day_volume,volume,day,increase_criteria))
+                ret = True
+                break
+            last_day_volume = volume
+        return ret
+    
+    def is_volume_sum_ok(self,stock_id,day_num,sum_criteria):
+        return self.get_volume_sum(stock_id,day_num)>=sum_criteria
     
     def get_delta(self,stock_id,day_num):
         '''

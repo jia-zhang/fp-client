@@ -43,11 +43,18 @@ def get_top_n():
     return s_list
 
 def get_potential():
-    file_name = "pre_list.csv"
+    #file_name = "pre_list.csv"
+    file_name = "valid_stock.csv"
+    ret = []
     f = StockFilter()
     s_list = f.util.get_stock_list_from_file(file_name)
     s_list = f.get_increase_rate_increase(s_list,3)
-    return s_list
+    #filter volumes...
+    for s in s_list:
+        if f.util.is_volume_increase_within_days_2(s,3) and f.util.is_volume_sum_ok(s,5,10):
+            ret.append(s)
+    #return s_list
+    return ret
 
 def add_to_list(full_list, sub_list):
     ret = full_list
@@ -57,17 +64,6 @@ def add_to_list(full_list, sub_list):
     return ret
 
 def fp():
-    #full_list = []
-    m = StockMailer()
-    t = StockUtil()
-    s_list = analyze()    
-    #for s in s_list:
-    #    print("%s-%s:%s"%(s,t.get_stock_name_from_id(s),t.get_live_aoi(s)))  
-    file_name = "./output/fp_%s.csv"%(t.get_today())  
-    t.save_stock_list_to_file(s_list,file_name)
-    m.send_fp_mail(s_list)
-
-def fp1():
     full_list = []
     top_n_list = get_top_n()
     potential_list = get_potential()
@@ -86,7 +82,7 @@ def fp1():
 
 if __name__ == '__main__':    
     #fp()
-    fp1()
+    fp()
     #time.sleep(30)
     #send_fp_mail()
 
