@@ -262,7 +262,7 @@ class StockUtil():
                 break
         return ret
     
-    def is_volume_increase_within_days_2(self,stock_id,day_num,increase_criteria=2):
+    def is_volume_increase_within_days_2(self,stock_id,day_num,increase_criteria=1.5):
         ret = False
         for day in range(day_num):            
             volume = self.get_volume(stock_id,day)

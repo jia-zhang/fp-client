@@ -43,18 +43,29 @@ def get_top_n():
     return s_list
 
 def get_potential():
-    #file_name = "pre_list.csv"
-    file_name = "valid_stock.csv"
+    file_name = "pre_list.csv"    
     ret = []
     f = StockFilter()
     s_list = f.util.get_stock_list_from_file(file_name)
+    s_list = f.get_increase_rate_increase(s_list,3)    
+    return s_list
+
+def get_potential_2():
+    valid_stock = "valid_stock.csv"
+    pre_stock = "pre_list.csv"
+    ret = []
+    f = StockFilter()
+    s_list = list(set(f.util.get_stock_list_from_file(valid_stock))-set(f.util.get_stock_list_from_file(pre_stock)))
     s_list = f.get_increase_rate_increase(s_list,3)
     #filter volumes...
     for s in s_list:
-        if f.util.is_volume_increase_within_days_2(s,3) and f.util.is_volume_sum_ok(s,5,10):
+        if f.util.is_volume_increase_within_days_2(s,3) and f.util.is_volume_sum_ok(s,5,10) \
+        and f.util.get_delta(s,3)>0 and f.util.get_delta(s,2)>0 and f.util.get_delta(s,1)>0\
+        and f.util.get_delta(s,3)<10:
             ret.append(s)
     #return s_list
     return ret
+
 
 def add_to_list(full_list, sub_list):
     ret = full_list
@@ -67,15 +78,20 @@ def fp():
     full_list = []
     top_n_list = get_top_n()
     potential_list = get_potential()
+    potential_list_2 = get_potential_2()
     print(top_n_list)
     print(potential_list)
+    print(potential_list_2)
     m = StockMailer()
     m.add_msg_body("谁是龙头：")
     m.compose_msg_body(top_n_list)
     m.add_msg_body("潜力股列表：")
     m.compose_msg_body(potential_list)
+    m.add_msg_body("潜力股列表-ds版：")
+    m.compose_msg_body(potential_list_2)    
     add_to_list(full_list,top_n_list)
     add_to_list(full_list,potential_list)
+    add_to_list(full_list,potential_list_2)
     m.util.save_fp_list(full_list)
     print(m.msg_body_list)
     m.send_fp_mail()
