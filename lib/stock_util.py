@@ -15,7 +15,7 @@ class StockUtil():
     
     def is_bid_time(self):
         t = datetime.datetime.now()
-        if t.hour==9 and t.minute>=20 and t.minute<=25:
+        if t.hour==9 and t.minute>=15 and t.minute<=25:
             return True
         return False 
     

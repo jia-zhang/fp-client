@@ -18,12 +18,21 @@ class StockMon():
             self.logger.info("股票名称（股票ID）| 涨幅 | 竞买价 | 竞买量")            
             for s in stock_list:
                 status = self.util.get_live_mon_items_bid(s)
-                self.logger.info(status) 
                 aoi = self.util.get_live_aoi_bid(s)   
+                if aoi-sample[s]>2:
+                    plus_icon = "[↑+%s]"%(aoi-sample)
+                    self.logger.info("*%s %s"%(status,plus_icon))
+                elif aoi-sample[s]<-2:
+                    plus_icon = "[↓%s]"%(aoi-sample)
+                    self.logger.info("*%s %s"%(status,plus_icon))
+                else:
+                    self.logger.info(status) 
+                '''               
                 if aoi-sample[s]>2:
                     self.logger.info("Stock %s aoi increased from %s to %s"%(s,sample[s],aoi))
                 elif aoi-sample[s]<-2:
                     self.logger.info("Stock %s aoi dropped from %s to %s"%(s,sample[s],aoi))
+                '''
                 sample[s] = aoi
             time.sleep(refresh_interval)
 
