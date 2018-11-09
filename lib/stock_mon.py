@@ -15,15 +15,15 @@ class StockMon():
             sample[s] = aoi
         while True:
             self.logger.info("================Monitor==============")
-            self.logger.info("股票名称（股票ID）| 涨幅 | 竞买价 | 竞买量")            
+            self.logger.info("股票名称（股票ID）| 涨幅 | 竞买价 | 竞买量（万手）")            
             for s in stock_list:
                 status = self.util.get_live_mon_items_bid(s)
                 aoi = self.util.get_live_aoi_bid(s)   
-                if aoi-sample[s]>2:
-                    plus_icon = "[↑+%s]"%(aoi-sample)
+                if aoi-sample[s]>1:
+                    plus_icon = "[↑+%s]"%(round(aoi-sample[s],2))
                     self.logger.info("*%s %s"%(status,plus_icon))
-                elif aoi-sample[s]<-2:
-                    plus_icon = "[↓%s]"%(aoi-sample)
+                elif aoi-sample[s]<-1:
+                    plus_icon = "[↓%s]"%(round(aoi-sample[s],2))
                     self.logger.info("*%s %s"%(status,plus_icon))
                 else:
                     self.logger.info(status) 
@@ -35,6 +35,15 @@ class StockMon():
                 '''
                 sample[s] = aoi
             time.sleep(refresh_interval)
+
+    def check_stock_list(self,stock_list):
+        sample = {}        
+        self.logger.info("================Monitor==============")
+        self.logger.info("股票名称（股票ID）| 开盘涨幅 | 当前涨幅 | 当前价格 | 成交量（万手）| 成交金额（亿）")            
+        for s in stock_list:
+            status = self.util.get_live_mon_items(s)  
+            self.logger.info(status)        
+
 
     def monitor_after_bid(self,stock_list,refresh_interval):
         while True:        

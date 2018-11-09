@@ -116,6 +116,11 @@ class StockUtil():
             output = f.read()
         return output.split(',')
     
+    def save_fp_list(self,stock_list):
+        file_name = "./output/fp_%s.csv"%(self.get_today())  
+        self.save_stock_list_to_file(stock_list,file_name)
+
+    
     def save_stock_list_to_file(self,stock_list,file_name):
         #file_name = "./output/fp_%s.csv"%(self.last_trading_day.replace('-','_'))
         s_list_str = ','.join(stock_list)
@@ -183,7 +188,7 @@ class StockUtil():
         #open_price = float(info[1])
         aoi = round((cur_price-last_day_price)*100/last_day_price,2)
         #aoi_open = (open_price-last_day_price)*100/last_day_price
-        ret = "%s(%s) | %s | %s | %s"%(info[0],stock_id,aoi,round(cur_price,2),info[10])
+        ret = "%s(%s) | %s | %s | %s"%(info[0],stock_id,aoi,round(cur_price,2),round(float(info[10])/10000,0))
         return ret       
 
     def get_live_status(self,stock_id):
@@ -226,7 +231,24 @@ class StockUtil():
         f.close()
         return json_output[stock_id]['stock_name']
     
+    def is_big_drop_within_days(self,stock_id,day_num,drop_criteria):
+        ret = False
+        for day in range(day_num):
+            drop = self.util.get_increase_amount(s,day)            
+            if drop<drop_criteria:
+                self.logger.info("Stock %s big drop(%s)>criteria(%s)...Drop day: %s"%(stock_id,drop,drop_criteria,day))
+                ret = True
+        return ret
     
+    def is_big_lift_within_days(self,stock_id,day_num,lift_criteria):
+        ret = False
+        for day in range(day_num):
+            lift = self.util.get_lift_in_one_day(s,day)            
+            if lift<lift_criteria:
+                self.logger.info("Stock %s big lift(%s)>criteria(%s)...lift day: %s"%(stock_id,lift,lift_criteria,day))
+                ret = True
+        return ret
+
 
     
     def get_delta(self,stock_id,day_num):

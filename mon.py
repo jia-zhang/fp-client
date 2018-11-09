@@ -17,5 +17,18 @@ def mon():
     else:
         m.logger.info("非交易时间，请等会再来！")
 
-if __name__ == '__main__':  
-    mon()
+def check(stock_list):
+    m = StockMon()
+    m.check_stock_list(stock_list)
+
+if __name__ == '__main__': 
+    arg_len = len(sys.argv)
+    if arg_len==1:
+        mon()
+    else:
+        file_name = sys.argv[1]
+        #print(file_name)
+        t = StockUtil()
+        stock_list = t.get_stock_list_from_file(file_name)
+        #print(stock_list)
+        check(stock_list)

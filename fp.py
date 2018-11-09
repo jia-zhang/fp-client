@@ -49,8 +49,15 @@ def get_potential():
     s_list = f.get_increase_rate_increase(s_list,3)
     return s_list
 
+def add_to_list(full_list, sub_list):
+    ret = full_list
+    for i in sub_list:
+        if i not in ret:
+            ret.append(i)
+    return ret
 
 def fp():
+    #full_list = []
     m = StockMailer()
     t = StockUtil()
     s_list = analyze()    
@@ -61,6 +68,7 @@ def fp():
     m.send_fp_mail(s_list)
 
 def fp1():
+    full_list = []
     top_n_list = get_top_n()
     potential_list = get_potential()
     print(top_n_list)
@@ -70,7 +78,10 @@ def fp1():
     m.compose_msg_body(top_n_list)
     m.add_msg_body("潜力股列表：")
     m.compose_msg_body(potential_list)
-    #print(m.msg_body_list)
+    add_to_list(full_list,top_n_list)
+    add_to_list(full_list,potential_list)
+    m.util.save_fp_list(full_list)
+    print(m.msg_body_list)
     m.send_fp_mail()
 
 if __name__ == '__main__':    

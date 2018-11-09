@@ -138,7 +138,7 @@ class StockFilter():
                     self.logger.info("Stock %s increase(%s) in day %s > last day increase(%s),please check..."%(s,increase,day,last_day_increase))
                     found = 0
                     break
-            if found==1:
+            if found==1 and self.util.get_delta(s,day_num)>0: #后面部分为了filter前面有大阴线的情况
                 ret.append(s)
         self.logger.info("Found %s stocks after filtering get_increase_rate_increase within %s days"%(len(ret),day_num))
         return ret
