@@ -5,12 +5,13 @@ import os
 import json
 from logger import Logger
 import datetime
+from stock_db import StockDb
 
 class StockUtil():
     def __init__(self):
         self.logger = Logger("StockUtil")
         self.valid_stock_file = "valid_stock.csv"
-        self.last_trading_day = self.get_last_trading_date()
+        #self.last_trading_date = self.get_last_trading_date()
         pass
     
     def is_bid_time(self):
@@ -58,28 +59,9 @@ class StockUtil():
             if output == '':
                 continue
             stock_detail = eval(output)
-            if self.last_trading_day == stock_detail[-1]['day']:
+            if self.last_trading_date == stock_detail[-1]['day']:
                 ret.append(s)
                 #self.logger.info(self.get_stock_name_from_id(s))
-        return ret
-    
-    def get_suspend_stocks(self):
-        '''
-        返回一个停牌的列表
-        '''
-        s_list = self.get_valid_stocks()
-        ret = []
-        for s in s_list:
-            file_name = self.get_dynamic_file_from_id(s)
-            with open(file_name,'r') as f:
-                output = f.read()
-            if output == "null":
-                ret.append(s)
-                continue
-            stock_detail = eval(output)
-            if self.last_trading_day != stock_detail[-1]['day']:
-                ret.append(s)
-                self.logger.info(self.get_stock_name_from_id(s))
         return ret
     
     def check_file_and_read(self,file_name):
@@ -122,10 +104,10 @@ class StockUtil():
 
     
     def save_stock_list_to_file(self,stock_list,file_name):
-        #file_name = "./output/fp_%s.csv"%(self.last_trading_day.replace('-','_'))
+        #file_name = "./output/fp_%s.csv"%(self.last_trading_date.replace('-','_'))
         s_list_str = ','.join(stock_list)
         with open(file_name,'w') as f:
-            f.write(s_list_str)
+            f.write(s_list_str)    
     
     def get_last_trading_date(self):
         '''
@@ -248,23 +230,10 @@ class StockUtil():
         last_day_price = float(info[2])
         return round((cur_price-last_day_price)*100/last_day_price,2)  
     
-    def get_stock_name_from_id(self,stock_id):
-        info = self.get_live_status(stock_id).split(',')
-        return info[0] 
-    
-    def get_stock_name_from_id_old(self,stock_id):
-        file_name = self.get_static_file_from_id(stock_id)
-        if not os.path.exists(file_name):
-            return ''
-        f = open(file_name,'r')
-        json_output = json.load(f)
-        f.close()
-        return json_output[stock_id]['stock_name']
-    
     def is_big_drop_within_days(self,stock_id,day_num,drop_criteria):
         ret = False
         for day in range(day_num):
-            drop = self.util.get_increase_amount(s,day)            
+            drop = self.get_increase_amount(s,day)            
             if drop<drop_criteria:
                 self.logger.info("Stock %s big drop(%s)>criteria(%s)...Drop day: %s"%(stock_id,drop,drop_criteria,day))
                 ret = True
@@ -327,7 +296,7 @@ class StockUtil():
         if abs(-1-day_num)>len(stock_detail):
             #print("%s:No data on day %s"%(stock_id,day_num))
             return 0
-        if self.last_trading_day != stock_detail[-1]['day']:
+        if self.last_trading_date != stock_detail[-1]['day']:
             #print("停牌或者怎样了%s"%(stock_id))
             return 0
         price_start = float(stock_detail[-1-day_num]['close'])
@@ -353,7 +322,7 @@ class StockUtil():
         if abs(-1-day_num)>len(stock_detail):
             self.logger.info("%s:No data on day %s"%(stock_id,day_num))
             return 0     
-        if self.last_trading_day != stock_detail[-1]['day']:
+        if self.last_trading_date != stock_detail[-1]['day']:
             self.logger.info("Stock %s's last trading day not equals to sh000001's last trading day, please check..."%(stock_id))
             return 0   
         price_high = float(stock_detail[-1-day_num]['high'])
@@ -382,7 +351,7 @@ class StockUtil():
         if abs(-2-day_num)>len(stock_detail):
             self.logger.info("%s:No data on day %s"%(stock_id,day_num))
             return 0     
-        if self.last_trading_day != stock_detail[-1]['day']:
+        if self.last_trading_date != stock_detail[-1]['day']:
             self.logger.info("Stock %s's last trading day not equals to sh000001's last trading day, please check..."%(stock_id))
             return 0   
         price_start = float(stock_detail[-2-day_num]['close'])
@@ -458,13 +427,14 @@ class StockUtil():
 
 if __name__ == '__main__':
     t = StockUtil()
+    print(t.get_last_dump_date())
     #print(t.get_volume('sz000002',0))
     #print(t.get_volume_sum('sh600290',3))
     #print(len(t.get_market_status(0,200)))
     #print(t.get_market_status(1,100)[99]['changepercent'])
     #print(t.get_market_status(0,100)[99]['changepercent'])
     #print(t.get_market_limit_up_number())
-    print(t.get_market_limit_down_number())
+    #print(t.get_market_limit_down_number())
     #print(t.get_stock_name_from_id('sz000002'))
     #print(t.get_suspend_stocks())
     #print(t.get_live_price('sz000673'))

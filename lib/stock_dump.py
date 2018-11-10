@@ -10,6 +10,7 @@ import subprocess
 import sys
 from logger import Logger
 from stock_util import StockUtil
+import threading
 
 class StockDump():
     def __init__(self):
@@ -82,7 +83,26 @@ class StockDump():
             #如果不是200就重试，每次递减重试次数
                 self.logger.info("Non 200 respose, retry. Status_code=%s"%(resp.status_code))
                 return self.get_stock_detail(url,stock_id,time_range,count,retry_num-1)
-        return ret   
+        return ret 
+
+    def dump_stock(self,stock_id,time_range,count):
+        dump_type = 'daily'
+        self.logger.info("Dump stock %s..."%(stock_id))
+        file_name = self.util.get_dynamic_file_from_id(stock_id,dump_type)
+        stock_detail = self.get_stock_detail(stock_id,time_range,count)
+        with open(file_name,'w') as f:
+            f.write(stock_detail)
+
+
+    def dump_stock_dynamic_daily_mt(self):
+        #stock_list = self.util.get_valid_stocks()
+        stock_list = self.util.get_stock_list_from_file('output/fp_2018_11_07.csv')
+        print(stock_list)
+        threads = [threading.Thread(target=self.dump_stock, args=(s, 240, self.default_count, )) for s in stock_list]
+        for t in threads:
+            t.start()  #启动一个线程
+        for t in threads:
+            t.join()  #等待每个线程执行结束
     
     def dump_stock_dynamic_daily(self):
         self.dump_stock_dynamic(240,self.default_count)
@@ -207,9 +227,10 @@ if __name__ == '__main__':
     t = StockDump()
     t.logger.info("start")
     #t.dump_stock_dynamic(240,15)
-    t.dump_stock_dynamic_daily()
-    t.zip_dynamic('./data/dynamic')
-    t.upload_dynamic('s3://g1-build/tmp')
+    #t.dump_stock_dynamic_daily()
+    t.dump_stock_dynamic_daily_mt()
+    #t.zip_dynamic('./data/dynamic')
+    #t.upload_dynamic('s3://g1-build/tmp')
     #t.download_dynamic('s3://g1-build/tmp')
     #t.unzip_dynamic('./data')
     #t.dump_stock_dynamic(240,15)

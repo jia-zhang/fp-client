@@ -10,7 +10,7 @@ def prepare_env():
     s.logger.info("Downloading all valid stock information...")
     #s.download_valid_stock_list()
     s.logger.info("Downloading stock dynamic data...")
-    s.download_dynamic_from_url()
+    #s.download_dynamic_from_url()
     s.logger.info("Downloading stock static data...")
     #s.download_static_from_url()
     s.logger.info("Unzipping files...")    

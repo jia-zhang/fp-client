@@ -6,6 +6,7 @@ from stock_util import StockUtil
 from stock_mailer import StockMailer
 import time
 import datetime
+from stock_db import StockDb
 
 def analyze():
     '''
@@ -75,6 +76,8 @@ def add_to_list(full_list, sub_list):
     return ret
 
 def fp():
+    db = StockDb('aa.db')
+    
     full_list = []
     top_n_list = get_top_n()
     potential_list = get_potential()
@@ -83,18 +86,22 @@ def fp():
     print(potential_list)
     print(potential_list_2)
     m = StockMailer()
+    fp_date = m.util.last_trading_date
     m.add_msg_body("谁是龙头：")
     m.compose_msg_body(top_n_list)
     m.add_msg_body("潜力股列表：")
     m.compose_msg_body(potential_list)
     m.add_msg_body("潜力股列表-ds版：")
-    m.compose_msg_body(potential_list_2)    
+    m.compose_msg_body(potential_list_2) 
+    db.add_fp_result(top_n_list,"龙头",fp_date)
+    db.add_fp_result(potential_list,"潜力",fp_date)
+    db.add_fp_result(potential_list_2,"屌丝潜力",fp_date)   
     add_to_list(full_list,top_n_list)
     add_to_list(full_list,potential_list)
     add_to_list(full_list,potential_list_2)
     m.util.save_fp_list(full_list)
     print(m.msg_body_list)
-    m.send_fp_mail()
+    #m.send_fp_mail()
 
 if __name__ == '__main__':    
     #fp()
