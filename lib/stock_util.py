@@ -6,6 +6,7 @@ import json
 from logger import Logger
 import datetime
 from stock_db import StockDb
+from stock_info import StockInfo
 
 class StockUtil():
     def __init__(self):
@@ -51,17 +52,12 @@ class StockUtil():
         '''
         返回一个目前正常交易的列表
         '''
-        s_list = self.get_valid_stocks()
+        db = StockDb()
+        s_list = db.get_stock_list()
         ret = []
         for s in s_list:
-            file_name = self.get_dynamic_file_from_id(s)
-            output = self.check_file_and_read(file_name)
-            if output == '':
-                continue
-            stock_detail = eval(output)
-            if self.last_trading_date == stock_detail[-1]['day']:
+            if StockInfo(s).is_trading():
                 ret.append(s)
-                #self.logger.info(self.get_stock_name_from_id(s))
         return ret
     
     def check_file_and_read(self,file_name):
@@ -427,7 +423,7 @@ class StockUtil():
 
 if __name__ == '__main__':
     t = StockUtil()
-    print(t.get_last_dump_date())
+    print(t.get_trading_stocks())
     #print(t.get_volume('sz000002',0))
     #print(t.get_volume_sum('sh600290',3))
     #print(len(t.get_market_status(0,200)))

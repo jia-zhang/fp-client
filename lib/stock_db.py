@@ -52,7 +52,12 @@ class StockDb():
     def get_stock_basic(self,stock_id):
         sql_cmd = "select * from tb_basic_info where stock_id='%s'"%(stock_id)
         ret = self.query_db(sql_cmd)
+        print(stock_id)
+        print(ret)
         return ret[0]
+    
+    def get_stock_name_from_id(self,stock_id):
+        return self.get_stock_basic(stock_id)[1]
     
     def get_stock_status(self,table_name,stock_id,day_n):
         '''
@@ -70,6 +75,18 @@ class StockDb():
         #print(type(ret))
         return DataFrame(ret)[0].values.tolist()
     
+    def get_trading_stock_list(self):
+        last_trading_date = self.get_last_trading_date()
+        sql_cmd = "select * from tb_daily_info where date='%s'"%(last_trading_date)
+        ret = self.query_db(sql_cmd)
+        return DataFrame(ret)[1].values.tolist()
+    
+    def get_suspend_stock_list(self):
+        all_stocks = self.get_stock_list()
+        trading_stocks = self.get_trading_stock_list()
+        return list(set(all_stocks) ^ set(trading_stocks))
+
+    
 if __name__ == '__main__':
     #print("hello")
     t = StockDb()
@@ -83,7 +100,13 @@ if __name__ == '__main__':
     '''
     #s = 'sz000538'
     #print(t.get_stock_status(s,0))
-    print(t.get_stock_list())
+    #print(t.get_stock_list())
+    s_list = t.get_suspend_stock_list()
+    for s in s_list:
+        #print(s)
+        print(t.get_stock_name_from_id(s))
+        #print(t.get_stock_status(s,14))
+
 
 
     
