@@ -36,8 +36,7 @@ class StockMon():
                 sample[s] = aoi
             time.sleep(refresh_interval)
 
-    def check_stock_list(self,stock_list):
-        sample = {}        
+    def check_stock_list(self,stock_list):      
         self.logger.info("================Monitor==============")
         self.logger.info("股票名称（股票ID）| 开盘涨幅 | 当前涨幅 | 当前价格 | 成交量（万手）| 成交金额（亿）")            
         for s in stock_list:

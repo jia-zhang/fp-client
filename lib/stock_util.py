@@ -96,8 +96,8 @@ class StockUtil():
     def get_static_file_from_id(self,stock_id):
         return "./data/static/%s.static.json"%(stock_id)
     
-    def get_dynamic_file_from_id(self,stock_id):
-        return "./data/dynamic/%s.json.d"%(stock_id)
+    def get_dynamic_file_from_id(self,stock_id,dump_type='daily'):
+        return "./data/dynamic/%s.json.%s"%(stock_id,dump_type)
     
     def check_dynamic_data(self):
         ret = False
@@ -165,7 +165,27 @@ class StockUtil():
         replace('settlement','"settlement"').replace('open','"open"').replace('high','"high"').replace('low','"low"').\
         replace('volume','"volume"').replace('amount','"amount"').replace('ticktime','"ticktime"').replace('per:','"per":').\
         replace('pb','"pb"').replace('mktcap','"mktcap"').replace('nmc','"nmc"').replace('turnoverratio','"turnoverratio"'))
-        
+    
+    def get_market_limit_up_number(self):
+        '''
+        获取市场涨停个数
+        '''
+        ret = 0
+        market_status = self.get_market_status(0,100)
+        for i in range(100):
+            if float(market_status[i]['changepercent'])<9.7:
+                return i       
+
+    def get_market_limit_down_number(self):
+        '''
+        获取市场跌停个数
+        '''
+        ret = 0
+        market_status = self.get_market_status(1,100)
+        for i in range(100):
+            if float(market_status[i]['changepercent'])>-9.7:
+                return i       
+
     
     def get_live_status_list(self,stock_list):
         s_list_str = ','.join(stock_list)
@@ -253,7 +273,7 @@ class StockUtil():
     def is_big_lift_within_days(self,stock_id,day_num,lift_criteria):
         ret = False
         for day in range(day_num):
-            lift = self.util.get_lift_in_one_day(s,day)            
+            lift = self.get_lift_in_one_day(stock_id,day)            
             if lift<lift_criteria:
                 self.logger.info("Stock %s big lift(%s)>criteria(%s)...lift day: %s"%(stock_id,lift,lift_criteria,day))
                 ret = True
@@ -441,7 +461,10 @@ if __name__ == '__main__':
     #print(t.get_volume('sz000002',0))
     #print(t.get_volume_sum('sh600290',3))
     #print(len(t.get_market_status(0,200)))
-    print(t.get_market_status(1,200))
+    #print(t.get_market_status(1,100)[99]['changepercent'])
+    #print(t.get_market_status(0,100)[99]['changepercent'])
+    #print(t.get_market_limit_up_number())
+    print(t.get_market_limit_down_number())
     #print(t.get_stock_name_from_id('sz000002'))
     #print(t.get_suspend_stocks())
     #print(t.get_live_price('sz000673'))

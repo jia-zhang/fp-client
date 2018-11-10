@@ -18,6 +18,7 @@ class StockDump():
         #with open('last_dump_date.txt','r') as f:
         #    self.last_dump_date = f.read()
         self.stock_list_file = 'stocks.csv'
+        self.default_count = 15
         self.util = StockUtil()
         self.last_trading_date = self.util.get_last_trading_date()
         if 'linux' in sys.platform:
@@ -81,24 +82,35 @@ class StockDump():
             #如果不是200就重试，每次递减重试次数
                 self.logger.info("Non 200 respose, retry. Status_code=%s"%(resp.status_code))
                 return self.get_stock_detail(url,stock_id,time_range,count,retry_num-1)
-        return ret    
+        return ret   
+    
+    def dump_stock_dynamic_daily(self):
+        self.dump_stock_dynamic(240,self.default_count)
+    
+    def dump_stock_dynamic_weekly(self):
+        self.dump_stock_dynamic(1680,self.default_count)
+    
+    def dump_stock_dynamic_monthly(self):
+        self.dump_stock_dynamic(7200,self.default_count)
     
     def dump_stock_dynamic(self,time_range,count,force=1):
         '''
-        Get stock dynamic info, 10 days open,high,low,close,volume
-        此函数在每天15：00之后调用一次即可。会存放在代码.dynamic.json文件里面。
-        新浪在多次请求后会timeout，多次调用次函数作为workaround.
-        '''
-        #cur_time = time.localtime().tm_hour
-        #self.logger.info(self.last_dump_date)
+        Dump stock info from sina.
+        time_range = 240, 1680, 7200 - daily, weekly, monthly
+        count = number of data need to  be dumpped        
+        '''  
         self.logger.info(self.util.get_last_trading_date())
-        #if self.last_dump_date == self.util.get_last_trading_date():
-        #    self.logger.info("No new info needs to be dumped, today is %s, last_dump_date is %s, last_trading_date is %s"%(time.strftime('%Y-%m-%d',time.localtime(time.time())),self.last_dump_date,self.get_last_trading_date()))
-        #    return
         s_list = self.util.get_valid_stocks()
+        if time_range == 240:
+            dump_type = 'daily'
+        elif time_range == 1680:
+            dump_type = 'weekly'
+        elif time_range == 7200:
+            dump_type = 'monthly'
         for s in s_list:
-            self.logger.info("Dumping stock dynamic %s..."%(s))
-            file_name = self.util.get_dynamic_file_from_id(s)
+            self.logger.info("Dumping stock %s dynamic %s..."%(s,dump_type))
+            #file_name = self.util.get_dynamic_file_from_id(s)
+            file_name = self.util.get_dynamic_file_from_id(s,dump_type)
             #self.logger.info(file_name)
             if (force==0 and os.path.exists(file_name)):
                 self.logger.info("%s already exists, skip"%(s))
