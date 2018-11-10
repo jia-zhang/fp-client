@@ -206,7 +206,8 @@ class StockDump():
 if __name__ == '__main__':
     t = StockDump()
     t.logger.info("start")
-    t.dump_stock_dynamic(240,15)
+    #t.dump_stock_dynamic(240,15)
+    t.dump_stock_dynamic_daily()
     t.zip_dynamic('./data/dynamic')
     t.upload_dynamic('s3://g1-build/tmp')
     #t.download_dynamic('s3://g1-build/tmp')

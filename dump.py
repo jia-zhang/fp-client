@@ -9,7 +9,9 @@ import time
 def dump_stock():
     s = StockDump()
     s.logger.info("start")
-    s.dump_stock_dynamic(240,15)
+    s.dump_stock_dynamic_daily()
+    s.dump_stock_dynamic_weekly()
+    s.dump_stock_dynamic_monthly()
     s.zip_dynamic('./data/dynamic')
     #time.sleep()
     s.upload_dynamic('s3://g1-build/tmp')
