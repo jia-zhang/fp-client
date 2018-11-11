@@ -50,14 +50,20 @@ class StockDb():
         return ret[0][0]
     
     def get_stock_basic(self,stock_id):
+        '''
+        Return emtpy list if the stock_id is not in tb_basic_info table.
+        '''
         sql_cmd = "select * from tb_basic_info where stock_id='%s'"%(stock_id)
         ret = self.query_db(sql_cmd)
-        print(stock_id)
-        print(ret)
-        return ret[0]
+        #print(stock_id)
+        #print(ret)
+        return ret
     
     def get_stock_name_from_id(self,stock_id):
-        return self.get_stock_basic(stock_id)[1]
+        return self.get_stock_basic(stock_id)[0][1]
+    
+    def get_float_shares_from_id(self,stock_id):
+        return self.get_stock_basic(stock_id)[0][2]
     
     def get_stock_status(self,table_name,stock_id,day_n):
         '''
@@ -72,7 +78,6 @@ class StockDb():
     def get_stock_list(self):
         sql_cmd = "select * from tb_basic_info"
         ret = self.query_db(sql_cmd)
-        #print(type(ret))
         return DataFrame(ret)[0].values.tolist()
     
     def get_trading_stock_list(self):
@@ -85,11 +90,35 @@ class StockDb():
         all_stocks = self.get_stock_list()
         trading_stocks = self.get_trading_stock_list()
         return list(set(all_stocks) ^ set(trading_stocks))
+    
+    def get_daily_info(self):
+        sql_cmd = "select * from tb_daily_info where turnover=''"
+        ret = self.query_db(sql_cmd)
+        return ret
 
+    
+    def stock_exist(self,stock_id):
+        pass
+        #sql_cmd = "select * "
+
+    def tmp(self):
+        #float_shares = self.get_float_shares_from_id(s)
+        info_list = self.get_daily_info()
+        for info in info_list:
+            stock_id = info[1]
+            float_shares = self.get_float_shares_from_id(stock_id)
+            volume = info[6]
+            date = info[0]
+            turn_over = round(volume*100/float_shares,2)
+            sql_cmd = "update tb_daily_info set turnover=%s where date='%s' and stock_id='%s'"%(turn_over,date,stock_id)
+            self.update_db(sql_cmd)
+            print("%s:%s:%s:%s"%(date,stock_id,volume,turn_over))
     
 if __name__ == '__main__':
     #print("hello")
     t = StockDb()
+    t.tmp()
+        #time.sleep(1)
     '''
     stock_list = t.get_fp_result('2018-11-09','龙头').split(',')
     for s in stock_list:
@@ -98,14 +127,17 @@ if __name__ == '__main__':
         print(t.get_stock_status(s,14))
     #print(t.get_last_trading_date())
     '''
-    #s = 'sz000538'
-    #print(t.get_stock_status(s,0))
+    s = 'sz002940'
+    
     #print(t.get_stock_list())
+    '''
     s_list = t.get_suspend_stock_list()
     for s in s_list:
         #print(s)
         print(t.get_stock_name_from_id(s))
         #print(t.get_stock_status(s,14))
+    '''
+    
 
 
 

@@ -5,6 +5,7 @@ import os
 import json
 from logger import Logger
 import datetime
+from bs4 import BeautifulSoup
 from stock_db import StockDb
 from stock_info import StockInfo
 
@@ -30,7 +31,22 @@ class StockUtil():
         if t.hour==11 and t.minute>30:
             return False
         return True
-        
+
+    def get_new_stock_info(self,page_num):
+        url = "http://vip.stock.finance.sina.com.cn//corp/view/vRPD_NewStockIssue.php?page=%s"%(page_num)
+        r = requests.get(url)
+        bs = BeautifulSoup(r.content,'lxml')
+        trs = bs.table.find_all('tr',class_='tr_2')
+        ret = []
+        for tr in trs:
+            tds = tr.find_all('td')
+            td_list = []
+            for td in tds:
+                td_text = td.text.lstrip().rstrip().replace('\n','')
+                td_list.append(td_text)
+            #print(','.join(td_list))
+            ret.append(td_list)
+        return ret[1:]   
 
     def get_yesterday(self): 
         today=datetime.date.today() 
@@ -48,17 +64,6 @@ class StockUtil():
     def get_valid_stocks(self):
         return self.get_stock_list_from_file(self.valid_stock_file)
 
-    def get_trading_stocks(self):
-        '''
-        返回一个目前正常交易的列表
-        '''
-        db = StockDb()
-        s_list = db.get_stock_list()
-        ret = []
-        for s in s_list:
-            if StockInfo(s).is_trading():
-                ret.append(s)
-        return ret
     
     def check_file_and_read(self,file_name):
         if not os.path.exists(file_name):
@@ -229,7 +234,7 @@ class StockUtil():
     def is_big_drop_within_days(self,stock_id,day_num,drop_criteria):
         ret = False
         for day in range(day_num):
-            drop = self.get_increase_amount(s,day)            
+            drop = self.get_increase_amount(stock_id,day)            
             if drop<drop_criteria:
                 self.logger.info("Stock %s big drop(%s)>criteria(%s)...Drop day: %s"%(stock_id,drop,drop_criteria,day))
                 ret = True
@@ -423,7 +428,6 @@ class StockUtil():
 
 if __name__ == '__main__':
     t = StockUtil()
-    print(t.get_trading_stocks())
     #print(t.get_volume('sz000002',0))
     #print(t.get_volume_sum('sh600290',3))
     #print(len(t.get_market_status(0,200)))
