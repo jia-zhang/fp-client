@@ -36,12 +36,10 @@ def analyze():
     print(s_list)
     return s_list  
 
-def get_top_n():
-    file_name = "pre_list.csv"
+def get_top_n(stock_list,n,day_num):
+    print(stock_list)
     f = StockFilter()
-    s_list = f.util.get_stock_list_from_file(file_name)
-    s_list = f.get_top_increase(s_list,10,7)
-    return s_list
+    return f.get_top_increase(stock_list,n,day_num)
 
 def get_potential():
     file_name = "pre_list.csv"    
@@ -76,8 +74,10 @@ def add_to_list(full_list, sub_list):
     return ret
 
 def fp():
-    db = StockDb('aa.db')
-    
+    db = StockDb()
+    stock_list = db.get_stock_list()
+    print(get_top_n(stock_list,10,9))
+    '''
     full_list = []
     top_n_list = get_top_n()
     potential_list = get_potential()
@@ -102,6 +102,7 @@ def fp():
     m.util.save_fp_list(full_list)
     print(m.msg_body_list)
     #m.send_fp_mail()
+    '''
 
 if __name__ == '__main__':    
     #fp()

@@ -12,6 +12,7 @@ from stock_info import StockInfo
 class StockUtil():
     def __init__(self):
         self.logger = Logger("StockUtil")
+        self.db = StockDb()
         self.valid_stock_file = "valid_stock.csv"
         pass
     
@@ -98,16 +99,6 @@ class StockUtil():
         s_list_str = ','.join(stock_list)
         with open(file_name,'w') as f:
             f.write(s_list_str)    
-    
-    def get_trading_date(self):
-        '''
-        获取最近一次的交易日。获取上证指数的最后交易数据即可。
-        '''
-        #headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36'}
-        detail_url = "http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh000001&scale=240&ma=no&datalen=5"
-        resp = requests.get(detail_url)
-        return eval(resp.text.replace('day','"day"').replace('open','"open"').replace('low','"low"').\
-        replace('high','"high"').replace('close','"close"').replace('volume','"volume"'))[-1]['day']
     
     
 
@@ -283,33 +274,12 @@ class StockUtil():
     def is_volume_sum_ok(self,stock_id,day_num,sum_criteria):
         return self.get_volume_sum(stock_id,day_num)>=sum_criteria
     
-    def get_delta(self,stock_id,day_num):
-        '''
-        获取day_num天前到目前收盘价的delta值，以%表示。
-        day_num取值在1~10之间，太长或者等于0没有意义。
-        day_num = 1（1天前的收盘价和最后一天收盘价的delta）
-        day_num = 10（10天前的收盘价和最后一天收盘价的delta）
-        '''
+    def get_delta(self,stock_id,day_num):        
         if day_num<=0 or day_num>10:
             self.logger.info("Please specify a daynum which between 1~10...")
             return 0 
-        file_name = self.get_dynamic_file_from_id(stock_id)
-        output = self.check_file_and_read(file_name)
-        if output=='':
-            return 0
-        stock_detail = eval(output)
-        if abs(-1-day_num)>len(stock_detail):
-            #print("%s:No data on day %s"%(stock_id,day_num))
-            return 0
-        if self.last_trading_date != stock_detail[-1]['day']:
-            #print("停牌或者怎样了%s"%(stock_id))
-            return 0
-        price_start = float(stock_detail[-1-day_num]['close'])
-        #print(price_start)        
-        price_end = float(stock_detail[-1]['close'])
-        #print(price_end)
-        lift_status = round((price_end-price_start)*100/price_start,2)
-        return lift_status
+        sql_cmd = "select sum(pchg) from (select * from tb_daily_info where stock_id='%s' order by date desc limit %s)"%(stock_id,day_num)        
+        return float(self.db.query_db(sql_cmd)[0][0])
     
     def get_lift_in_one_day(self,stock_id,day_num):
         '''
@@ -403,14 +373,15 @@ class StockUtil():
     
 if __name__ == '__main__':
     t = StockUtil()
+    print(t.get_delta('sz000622',3))
     #print(t.get_last_trading_date())
     #print(t.get_volume('sz000002',0))
     #print(t.get_volume_sum('sh600290',3))
     #print(len(t.get_market_status(0,200)))
     #print(t.get_market_status(1,100)[99]['changepercent'])
     #print(t.get_market_status(0,100)[99]['changepercent'])
-    t.get_market_limit_up_number()
-    t.get_market_limit_down_number()
+    #t.get_market_limit_up_number()
+    #t.get_market_limit_down_number()
     #print(t.get_stock_name_from_id('sz000002'))
     #print(t.get_suspend_stocks())
     #print(t.get_live_price('sz000673'))

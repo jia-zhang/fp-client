@@ -111,6 +111,11 @@ class StockDb():
         pass
         #sql_cmd = "select * "
 
+    def get_rcpt_list(self):
+        sql_cmd = "select value from tb_configuration where name='rcpt_list'"
+        ret = self.query_db(sql_cmd)
+        return ret[0][0].split(',')
+
     def tmp(self):
         #float_shares = self.get_float_shares_from_id(s)
         info_list = self.get_daily_info()
@@ -127,7 +132,9 @@ class StockDb():
 if __name__ == '__main__':
     #print("hello")
     t = StockDb()
-    print(t.get_last_turnover('sz000002'))
+    #print(t.get_rcpt_list())
+    #t.add_pre_dump_daily('2018-11-12')
+    #print(t.get_last_turnover('sz000002'))
         #time.sleep(1)
     '''
     stock_list = t.get_fp_result('2018-11-09','龙头').split(',')

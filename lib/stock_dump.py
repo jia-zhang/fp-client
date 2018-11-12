@@ -17,11 +17,12 @@ class StockDump():
     def __init__(self):
         #self.stock_list_url = "http://quote.eastmoney.com/stocklist.html"
         self.logger = Logger("StockDump")
-        self.db = StockDb('ss1.db')
+        self.db = StockDb('ss.db')
         self.stock_list = self.db.get_stock_list()
         self.last_dump_date = self.db.get_last_dump_date()
         self.default_count = 1 #if dump occurs everyday, it should only get the data of last trading date   
-        #self.last_trading_date = self.get_last_trading_date_live()        
+        #self.last_trading_date = self.get_last_trading_date_live()   
+        self.last_trading_date = '2018-11-12'
 
     def get_last_trading_date_live(self):
         '''
@@ -41,13 +42,14 @@ class StockDump():
         '''
         #headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36'}
         ret = ''
-        #proxies = {'http': 'http://18.197.117.119:8080', 'https': 'http://18.197.117.119:8080'}
+        proxies = {'http': 'http://18.197.117.119:8080', 'https': 'http://18.197.117.119:8080'}
         detail_url = ("http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?"
                     "symbol=%s&scale=%s&ma=no&datalen=%s"
         )%(stock_id,time_range,count)
         #self.logger.info(detail_url)
         try:
-            resp = requests.get(detail_url, timeout=60)
+            resp = requests.get(detail_url, proxies = proxies, timeout=60)
+            #resp = requests.get(detail_url, timeout=60)
             if resp.status_code!=200:
                 requests.raise_for_status()
             ret = resp.text.replace('day','"day"').replace('open','"open"').replace('low','"low"')\
@@ -63,8 +65,8 @@ class StockDump():
                 return self.get_stock_detail(url,stock_id,time_range,count,retry_num-1)
         return ret 
 
-    def get_pchg(self,stock_id,date): #get price change percent for one day
-        ret = 0
+    def get_pchg_turnover(self,stock_id,date): #get price change percent for one day
+        ret = []
         ori_stock_id = stock_id
         if stock_id.startswith('sh'):
             stock_id = "0%s"%(stock_id.replace('sh',''))
@@ -72,15 +74,17 @@ class StockDump():
             stock_id = "1%s"%(stock_id.replace('sz',''))
         date = date.replace('-','')
         #proxies = {'http': 'http://18.197.117.119:8080', 'https': 'http://18.197.117.119:8080'}
-        url = "http://quotes.money.163.com/service/chddata.html?code=%s&start=%s&end=%s&fields=PCHG"%(stock_id,date,date)
+        url = "http://quotes.money.163.com/service/chddata.html?code=%s&start=%s&end=%s&fields=PCHG;TURNOVER"%(stock_id,date,date)
         #print(url)
         r = requests.get(url)
         r_list = r.text.split('\r\n')[1:-1]
         for line in r_list:
             tmp = line.split(',')
             date = tmp[0]
-            pchg = round(float(tmp[-1]),2)
-            ret = pchg
+            pchg = round(float(tmp[-2]),2)
+            turnover = round(float(tmp[-1]),2)
+            ret.append(pchg)
+            ret.append(turnover)
         return ret
     
     '''
@@ -97,27 +101,28 @@ class StockDump():
     '''
     
     def pre_dump(self,stock_id):
-        pre_dump_file = "predump-%s.csv"%(self.last_dump_date)
+        pre_dump_file = "predump-%s.csv"%(self.last_trading_date)
         f = open(pre_dump_file,'a')
         stock_detail_list = self.dump_stock_daily(stock_id)
+        if stock_detail_list==[]:
+            f.close()
+            return
         combined_info = self.combine_stock_info(stock_id,stock_detail_list[0])
         f.write("%s\n"%(combined_info))
         f.close()
 
-    def real_pre_dump(self):
-        while True:
-            try:
-                stock_id = self.stock_list.pop()
-            except IndexError:
-                break
-            self.pre_dump(stock_id)
-
     def pre_dump_mt(self,thread_num):
-        for i in range(thread_num):
-            t=threading.Thread(target=self.real_pre_dump())
+        #stock_list = self.stock_list
+        stock_list = ['sz002711']
+        threads = []
+        for s in stock_list:
+            t=threading.Thread(target=self.pre_dump,args=(s,))
+            threads.append(t)
+        for t in threads:
             t.start()
-        for i in range(thread_num):
-            t.join()
+            while True:
+                if(len(threading.enumerate())<thread_num):
+                    break
 
     def combine_stock_info(self,stock_id,stock_detail_dict):
         date = stock_detail_dict['day']
@@ -126,9 +131,10 @@ class StockDump():
         price_low = stock_detail_dict['low']
         price_close = stock_detail_dict['close']
         volume = stock_detail_dict['volume']
-        float_shares = self.db.get_float_shares_from_id(stock_id)
-        turn_over = round(float(volume)*100/float_shares,2)
-        p_chg = self.get_pchg(stock_id,date)
+        pchg_turnover = self.get_pchg_turnover(stock_id,date)
+        #float_shares = self.db.get_float_shares_from_id(stock_id)
+        turn_over = pchg_turnover[1]
+        p_chg = pchg_turnover[0]
         ret = "%s,%s,%s,%s,%s,%s,%s,%s,%s"%(date,stock_id,price_open,price_high,price_low,price_close,volume,turn_over,p_chg)
         return ret
 
@@ -155,10 +161,11 @@ class StockDump():
         '''
         Will return a list of stock info get from sina...
         '''
-        dump_type = 'daily'
         self.logger.info("Dump stock %s..."%(stock_id))
-        #file_name = self.util.get_dynamic_file_from_id(stock_id,dump_type)
-        stock_detail_list = eval(self.get_stock_detail(stock_id,time_range,count))
+        tmp = self.get_stock_detail(stock_id,time_range,count)
+        if tmp=='null':
+            return []
+        stock_detail_list = eval(tmp)
         return stock_detail_list
     
     def dump_stock_daily(self,stock_id):
@@ -255,28 +262,38 @@ class StockDump():
             except:
                 self.logger.info("exception on stock %s!"%(s))
     
-    
+    def update_db_1(self,info_list):
+        pass
+
 
 if __name__ == '__main__':
     t = StockDump()
-    t.pre_dump_mt(10)
-    #t.dump_stock_daily_st()
-    #t.dump_stock_daily_mt()
-    '''
-    stock_id = 'sz000002'
-    stock_detail_list = t.dump_stock_daily(stock_id)
-    print(t.combine_stock_info(stock_id,stock_detail_list[0]))
-    '''
+    #t.pre_dump_mt(10)  
+    #print(t.dump_stock_daily('sz002720'))
+    #print(type(t.get_stock_detail('sz002720',240,1)))
     #stock_list = ['sz000002','sh600000']
-    '''
-    fp_types = ['龙头','潜力','屌丝潜力']        
-    date = t.db.get_last_trading_date()
-    for tp in fp_types:
-        s_list = t.db.get_fp_result(date,tp).split(',')        
-        t.pre_dump(s_list)
-    '''
-    #print(stock_detail)
-    #print(t.get_pchg(stock_id,'2018-11-09'))
+    
+    
+    
+    stock_list = t.db.get_stock_list()
+    f = open('predump-2018-11-12.csv','r') 
+    count = 0
+    download_list = []
+    for line in f.readlines():
+        item = line.replace('\n','').split(',')
+        #download_list.append(item[1])
+        if (item[0]!='2018-11-12'):
+            continue
+        sql_cmd = "insert into tb_daily_info values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"\
+        %(item[0],item[1],item[2],item[3],item[4],item[5],item[6],item[7],item[8])
+        t.db.update_db(sql_cmd)
+    #print(count)
+    #print(list(set(stock_list)^set(download_list)))
+    f.close()
+    
+    #stock_list = ['sz000002','sh600000']
+    
+    
   
 
 
