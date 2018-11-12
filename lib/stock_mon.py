@@ -40,7 +40,7 @@ class StockMon():
 
     def check_stock_list(self,stock_list):      
         self.logger.info("================Monitor==============")
-        self.logger.info("股票名称（股票ID）| 开盘涨幅 | 当前涨幅 | 当前价格 | 成交量 | 成交金额 | 昨日换手 | 昨日涨幅 | 流通股")            
+        self.logger.info("  股票名称（股票ID）       | 开盘涨幅  | 当前涨幅  | 当前价格 |    成交量      |   成交金额   | 昨日换手 | 昨日涨幅  |    流通股")            
         for s in stock_list:
             status = self.util.get_live_mon_items(s)  
             self.logger.info(status)        
@@ -52,11 +52,20 @@ class StockMon():
             self.logger.info("股票名称（股票ID）| 开盘涨幅 | 当前涨幅 | 当前价格 | 成交量（万手）| 成交金额（亿）")
             for s in stock_list:
                 self.logger.info(self.util.get_live_mon_items(s))
-            time.sleep(refresh_interval)    
+            time.sleep(refresh_interval)  
 
+    def check_fp_list(self):
+        db = StockDb()
+        fp_types = ['龙头','潜力','屌丝潜力']        
+        date = db.get_last_trading_date()
+        for t in fp_types:
+            s_list = db.get_fp_result(date,t).split(',')
+            self.check_stock_list(s_list)        
 
 if __name__ == '__main__':
     t = StockMon()
+    t.check_fp_list()
+    '''
     db = StockDb()
     s_list = []
     sql_cmd = "select stock_list from tb_fp_result where type='龙头'"    
@@ -71,7 +80,7 @@ if __name__ == '__main__':
     t.check_stock_list(lt)
     t.check_stock_list(ql)
     t.check_stock_list(ds)
-    '''
+    
     s_list.append(lt)
     s_list.append(ql)
     s_list.append(ds)

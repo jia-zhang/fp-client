@@ -37,8 +37,8 @@ class StockDb():
     def get_fp_result(self,fp_date,fp_type):
         sql_cmd = "select stock_list from tb_fp_result where date='%s' and type='%s'"%(fp_date,fp_type)
         ret = self.query_db(sql_cmd)
-        return ret[0][0]
-
+        return ret[0][0]    
+    
     def get_last_dump_date(self):
         sql_cmd = "select date from tb_daily_info where stock_id='sh000001' order by date desc limit 1"
         ret = self.query_db(sql_cmd)

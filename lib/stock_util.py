@@ -178,8 +178,9 @@ class StockUtil():
         #print(len(stock_name))  
         #print(2*'aaa')
         if len(stock_name)<4:
-            stock_name = "%s%s"%('  '*(4-len(stock_name)),stock_name)
-        print(len(stock_name))
+            #stock_name = "%s%s"%(''*(4-len(stock_name)),stock_name)
+            stock_name = "%s%s"%('  ',stock_name)
+        #print(len(stock_name))
         aoi = round((cur_price-last_day_price)*100/last_day_price,2)
         aoi_open = round((open_price-last_day_price)*100/last_day_price,2)
         volume = round(float(info[8])/1000000,2)
@@ -188,7 +189,7 @@ class StockUtil():
         last_turnover = db.get_last_turnover(stock_id)
         last_pchg = db.get_last_pchg(stock_id)
         float_shares = round(db.get_float_shares_from_id(stock_id)/100000000,2)
-        ret = "%6s(%8s) | %8s%% | %8s%% | %8s | %8s(万手) | %8s(亿) | %8s | %8s%% | %8s(亿)"%(info[0],stock_id,aoi_open,aoi,info[3],volume,rmb,last_turnover,last_pchg,float_shares)
+        ret = "%s(%s) | %8s%% | %8s%% | %8s | %8s(万手) | %8s(亿) | %8s | %8s%% | %8s(亿)"%(stock_name,stock_id,aoi_open,aoi,info[3],volume,rmb,last_turnover,last_pchg,float_shares)
         if(aoi>9.7):
             ret = "└(^o^)┘ %s"%ret
         elif (aoi>aoi_open and aoi>3):
