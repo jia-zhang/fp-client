@@ -10,53 +10,30 @@ import subprocess
 import sys
 from logger import Logger
 from stock_util import StockUtil
+from stock_db import StockDb
 import threading
 
 class StockDump():
     def __init__(self):
         #self.stock_list_url = "http://quote.eastmoney.com/stocklist.html"
         self.logger = Logger("StockDump")
-        #with open('last_dump_date.txt','r') as f:
-        #    self.last_dump_date = f.read()
-        self.stock_list_file = 'stocks.csv'
-        self.default_count = 15
-        self.util = StockUtil()
-        self.last_trading_date = self.util.get_last_trading_date()
-        if 'linux' in sys.platform:
-            self.zip_cmd = '7za'
-        else:
-            self.zip_cmd = "util\\7z"
+        self.db = StockDb('ss1.db')
+        self.stock_list = self.db.get_stock_list()
+        self.last_dump_date = self.db.get_last_dump_date()
+        self.default_count = 1 #if dump occurs everyday, it should only get the data of last trading date   
+        #self.last_trading_date = self.get_last_trading_date_live()        
 
-    def download_valid_stock_list(self):        
-        local_file = "valid_stock.csv"
-        download_url = "https://s3.eu-central-1.amazonaws.com/g1-build/tmp/%s"%(local_file)
-        r = requests.get(download_url) 
-        with open(local_file, "wb") as f:
-            f.write(r.content)
+    def get_last_trading_date_live(self):
+        '''
+        获取最近一次的交易日。获取上证指数的最后交易数据即可。
+        '''
+        self.logger.info("Getting last trading date live...")
+        #headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36'}
+        detail_url = "http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh000001&scale=240&ma=no&datalen=5"
+        resp = requests.get(detail_url)
+        return eval(resp.text.replace('day','"day"').replace('open','"open"').replace('low','"low"').\
+        replace('high','"high"').replace('close','"close"').replace('volume','"volume"'))[-1]['day']
     
-    def get_stock_list(self):
-        '''
-        应该只需要调用一次，以后统一用valid_stock.csv
-        '''
-        resp = requests.get("http://quote.eastmoney.com/stocklist.html")
-        resp.encoding = 'gb2312'
-        s = r'<li><a target="_blank" href="http://quote.eastmoney.com/(.*?).html">'
-        pat = re.compile(s)
-        codes = pat.findall(resp.text)
-        return codes
-
-    def save_stock_list(self,file_name):
-        '''
-        同上
-        '''
-        ret = []
-        all_stocks = self.get_stock_list()
-        for n in all_stocks:
-            if n.startswith('sz00') or n.startswith('sh60') or n.startswith('sz300'):
-                ret.append(n)
-        with open(file_name,'w') as f:
-            f.write(",".join(ret))
-       
     def get_stock_detail(self,stock_id,time_range,count,retry_num=3):
         '''
         获取某股票在time_range内的动态数据，开盘价，收盘价之类。
@@ -64,12 +41,13 @@ class StockDump():
         '''
         #headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36'}
         ret = ''
+        #proxies = {'http': 'http://18.197.117.119:8080', 'https': 'http://18.197.117.119:8080'}
         detail_url = ("http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?"
                     "symbol=%s&scale=%s&ma=no&datalen=%s"
         )%(stock_id,time_range,count)
         #self.logger.info(detail_url)
         try:
-            resp = requests.get(detail_url,timeout=60)
+            resp = requests.get(detail_url, timeout=60)
             if resp.status_code!=200:
                 requests.raise_for_status()
             ret = resp.text.replace('day','"day"').replace('open','"open"').replace('low','"low"')\
@@ -85,33 +63,135 @@ class StockDump():
                 return self.get_stock_detail(url,stock_id,time_range,count,retry_num-1)
         return ret 
 
+    def get_pchg(self,stock_id,date): #get price change percent for one day
+        ret = 0
+        ori_stock_id = stock_id
+        if stock_id.startswith('sh'):
+            stock_id = "0%s"%(stock_id.replace('sh',''))
+        else:
+            stock_id = "1%s"%(stock_id.replace('sz',''))
+        date = date.replace('-','')
+        #proxies = {'http': 'http://18.197.117.119:8080', 'https': 'http://18.197.117.119:8080'}
+        url = "http://quotes.money.163.com/service/chddata.html?code=%s&start=%s&end=%s&fields=PCHG"%(stock_id,date,date)
+        #print(url)
+        r = requests.get(url)
+        r_list = r.text.split('\r\n')[1:-1]
+        for line in r_list:
+            tmp = line.split(',')
+            date = tmp[0]
+            pchg = round(float(tmp[-1]),2)
+            ret = pchg
+        return ret
+    
+    '''
+    def pre_dump(self,stock_list=[]):
+        pre_dump_file = "predump-%s.csv"%(self.last_dump_date)
+        f = open(pre_dump_file,'w')
+        if stock_list==[]:
+            stock_list = self.stock_list
+        for stock_id in stock_list:
+            stock_detail_list = self.dump_stock_daily(stock_id)
+            combined_info = self.combine_stock_info(stock_id,stock_detail_list[0])
+            f.write("%s\n"%(combined_info))
+        f.close()
+    '''
+    
+    def pre_dump(self,stock_id):
+        pre_dump_file = "predump-%s.csv"%(self.last_dump_date)
+        f = open(pre_dump_file,'a')
+        stock_detail_list = self.dump_stock_daily(stock_id)
+        combined_info = self.combine_stock_info(stock_id,stock_detail_list[0])
+        f.write("%s\n"%(combined_info))
+        f.close()
+
+    def real_pre_dump(self):
+        while True:
+            try:
+                stock_id = self.stock_list.pop()
+            except IndexError:
+                break
+            self.pre_dump(stock_id)
+
+    def pre_dump_mt(self,thread_num):
+        for i in range(thread_num):
+            t=threading.Thread(target=self.real_pre_dump())
+            t.start()
+        for i in range(thread_num):
+            t.join()
+
+    def combine_stock_info(self,stock_id,stock_detail_dict):
+        date = stock_detail_dict['day']
+        price_open = stock_detail_dict['open']
+        price_high = stock_detail_dict['high']
+        price_low = stock_detail_dict['low']
+        price_close = stock_detail_dict['close']
+        volume = stock_detail_dict['volume']
+        float_shares = self.db.get_float_shares_from_id(stock_id)
+        turn_over = round(float(volume)*100/float_shares,2)
+        p_chg = self.get_pchg(stock_id,date)
+        ret = "%s,%s,%s,%s,%s,%s,%s,%s,%s"%(date,stock_id,price_open,price_high,price_low,price_close,volume,turn_over,p_chg)
+        return ret
+
+       
+    def update_db(self,stock_id,stock_detail_dict):
+        date = stock_detail_dict['day']
+        price_open = stock_detail_dict['open']
+        price_high = stock_detail_dict['high']
+        price_low = stock_detail_dict['low']
+        price_close = stock_detail_dict['close']
+        volume = stock_detail_dict['volume']
+        float_shares = self.db.get_float_shares_from_id(stock_id)
+        turn_over = round(float(volume)*100/float_shares,2)
+        p_chg = self.get_pchg(stock_id,date)
+        sql_cmd = "insert into tb_daily_info values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"\
+        %(date,stock_id,price_open,price_high,price_low,price_close,volume,turn_over,p_chg)
+        self.db.update_db(sql_cmd)
+    
+    def update_db_from_list(self,stock_id,stock_detail_list):
+        for s_dict in stock_detail_list:
+            self.update_db(stock_id,s_dict)
+
     def dump_stock(self,stock_id,time_range,count):
+        '''
+        Will return a list of stock info get from sina...
+        '''
         dump_type = 'daily'
         self.logger.info("Dump stock %s..."%(stock_id))
-        file_name = self.util.get_dynamic_file_from_id(stock_id,dump_type)
-        stock_detail = self.get_stock_detail(stock_id,time_range,count)
-        with open(file_name,'w') as f:
-            f.write(stock_detail)
+        #file_name = self.util.get_dynamic_file_from_id(stock_id,dump_type)
+        stock_detail_list = eval(self.get_stock_detail(stock_id,time_range,count))
+        return stock_detail_list
+    
+    def dump_stock_daily(self,stock_id):
+        return self.dump_stock(stock_id,240,self.default_count)
+    
+    def dump_stock_weekly(self):
+        return self.dump_stock(stock_id,1680,self.default_count)
+    
+    def dump_stock_monthly(self):
+        return self.dump_stock(stock_id,7200,self.default_count)
 
+    
+    def real_dump(self):
+        while True:
+            try:
+                stock_id = self.stock_list.pop()
+            except IndexError:
+                break
+            stock_detail_list = self.dump_stock_daily(stock_id)
+            self.update_db_from_list(stock_id,stock_detail_list)
 
-    def dump_stock_dynamic_daily_mt(self):
-        #stock_list = self.util.get_valid_stocks()
-        stock_list = self.util.get_stock_list_from_file('output/fp_2018_11_07.csv')
-        print(stock_list)
-        threads = [threading.Thread(target=self.dump_stock, args=(s, 240, self.default_count, )) for s in stock_list]
-        for t in threads:
-            t.start()  #启动一个线程
-        for t in threads:
-            t.join()  #等待每个线程执行结束
+    def dump_stock_daily_mt(self):
+        for i in range(10):
+            t=threading.Thread(target=self.real_dump())
+            t.start()
+        for i in range(10):
+            t.join()
     
-    def dump_stock_dynamic_daily(self):
-        self.dump_stock_dynamic(240,self.default_count)
-    
-    def dump_stock_dynamic_weekly(self):
-        self.dump_stock_dynamic(1680,self.default_count)
-    
-    def dump_stock_dynamic_monthly(self):
-        self.dump_stock_dynamic(7200,self.default_count)
+    def dump_stock_daily_st(self):
+        for stock_id in self.stock_list:
+            stock_detail_list = self.dump_stock_daily(stock_id)
+            self.update_db_from_list(stock_id,stock_detail_list)
+
     
     def dump_stock_dynamic(self,time_range,count,force=1):
         '''
@@ -139,7 +219,7 @@ class StockDump():
             with open(file_name,'w') as f:
                 f.write(stock_detail)
             
-    def dump_stock_static(self,force=0):
+    def dump_stock_static(self,force=0): #Decrypted, remove it later
         '''
         Get some very basic static information from xueqiu.com
         if force==1, will overwrite exists json file, please be careful
@@ -175,65 +255,28 @@ class StockDump():
             except:
                 self.logger.info("exception on stock %s!"%(s))
     
-    def zip_dynamic(self,folder):
-        #cur_date = datetime.datetime.now().strftime('%Y_%m_%d')
-        cur_date = self.last_trading_date.replace("-","_")
-        zip_cmd = "%s a dynamic_%s.zip %s"%(self.zip_cmd,cur_date,folder)
-        return subprocess.call(zip_cmd,shell=True) 
     
-    def upload_dynamic(self,s3_bucket):
-        #cur_date = datetime.datetime.now().strftime('%Y_%m_%d')
-        cur_date = self.last_trading_date.replace("-","_")
-        upload_cmd = "aws s3 cp dynamic_%s.zip %s/dynamic_%s.zip --acl public-read"%(cur_date,s3_bucket,cur_date)
-        return subprocess.call(upload_cmd,shell=True)
-    
-    def download_dynamic_from_s3(self,s3_bucket):
-        #cur_date = datetime.datetime.now().strftime('%Y_%m_%d')
-        cur_date = self.last_trading_date.replace("-","_")
-        download_cmd = "aws s3 cp %s/dynamic_%s.zip ."%(s3_bucket,cur_date)
-        return subprocess.call(download_cmd,shell=True)
-    
-    def download_dynamic_from_url(self):
-        #cur_date = datetime.datetime.now().strftime('%Y_%m_%d')
-        cur_date = self.last_trading_date.replace("-","_")
-        local_file = "dynamic_%s.zip"%(cur_date)
-        download_url = "https://s3.eu-central-1.amazonaws.com/g1-build/tmp/dynamic_%s.zip"%(cur_date)
-        r = requests.get(download_url) 
-        with open(local_file, "wb") as f:
-            f.write(r.content)
-    
-    def download_static_from_url(self):
-        local_file = "static.zip"
-        download_url = "https://s3.eu-central-1.amazonaws.com/g1-build/tmp/%s"%(local_file)
-        r = requests.get(download_url) 
-        with open(local_file, "wb") as f:
-            f.write(r.content)
-    
-
-    def unzip_dynamic(self,folder):
-        #cur_date = datetime.datetime.now().strftime('%Y_%m_%d')
-        cur_date = self.last_trading_date.replace("-","_")
-        zip_cmd = "%s x dynamic_%s.zip -o%s -aoa"%(self.zip_cmd,cur_date,folder)
-        return subprocess.call(zip_cmd,shell=True) 
-
-    def unzip_static(self,folder):
-        zip_cmd = "%s x static.zip -o%s -aoa"%(self.zip_cmd,folder)
-        return subprocess.call(zip_cmd,shell=True) 
-    
-    def zip_and_upload(self,folder,s3_bucket):
-        pass
 
 if __name__ == '__main__':
     t = StockDump()
-    t.logger.info("start")
-    #t.dump_stock_dynamic(240,15)
-    #t.dump_stock_dynamic_daily()
-    t.dump_stock_dynamic_daily_mt()
-    #t.zip_dynamic('./data/dynamic')
-    #t.upload_dynamic('s3://g1-build/tmp')
-    #t.download_dynamic('s3://g1-build/tmp')
-    #t.unzip_dynamic('./data')
-    #t.dump_stock_dynamic(240,15)
-    #t.logger.info("end")
+    t.pre_dump_mt(10)
+    #t.dump_stock_daily_st()
+    #t.dump_stock_daily_mt()
+    '''
+    stock_id = 'sz000002'
+    stock_detail_list = t.dump_stock_daily(stock_id)
+    print(t.combine_stock_info(stock_id,stock_detail_list[0]))
+    '''
+    #stock_list = ['sz000002','sh600000']
+    '''
+    fp_types = ['龙头','潜力','屌丝潜力']        
+    date = t.db.get_last_trading_date()
+    for tp in fp_types:
+        s_list = t.db.get_fp_result(date,tp).split(',')        
+        t.pre_dump(s_list)
+    '''
+    #print(stock_detail)
+    #print(t.get_pchg(stock_id,'2018-11-09'))
+  
 
 
