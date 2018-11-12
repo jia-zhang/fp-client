@@ -1,6 +1,8 @@
 from stock_util import StockUtil
 from logger import Logger
+from stock_db import StockDb
 import time
+import threading
 
 class StockMon():
     def __init__(self):
@@ -38,7 +40,7 @@ class StockMon():
 
     def check_stock_list(self,stock_list):      
         self.logger.info("================Monitor==============")
-        self.logger.info("股票名称（股票ID）| 开盘涨幅 | 当前涨幅 | 当前价格 | 成交量（万手）| 成交金额（亿）")            
+        self.logger.info("股票名称（股票ID）| 开盘涨幅 | 当前涨幅 | 当前价格 | 成交量 | 成交金额 | 昨日换手 | 昨日涨幅 | 流通股")            
         for s in stock_list:
             status = self.util.get_live_mon_items(s)  
             self.logger.info(status)        
@@ -55,6 +57,29 @@ class StockMon():
 
 if __name__ == '__main__':
     t = StockMon()
-    s_list = ['sz000002','sh600000']
-    t.monitor_bid(s_list,20)
-    #t.monitor_after_bid(s_list,5)
+    db = StockDb()
+    s_list = []
+    sql_cmd = "select stock_list from tb_fp_result where type='龙头'"    
+    lt = list(db.query_db(sql_cmd)[0])[0].split(',')
+    print(type(lt))
+    print(lt)
+    sql_cmd = "select stock_list from tb_fp_result where type='潜力'"  
+    ql = list(db.query_db(sql_cmd)[0])[0].split(',')
+    sql_cmd = "select stock_list from tb_fp_result where type='屌丝潜力'"  
+    ds = list(db.query_db(sql_cmd)[0])[0].split(',')
+    #print(list(lt[0]))
+    t.check_stock_list(lt)
+    t.check_stock_list(ql)
+    t.check_stock_list(ds)
+    '''
+    s_list.append(lt)
+    s_list.append(ql)
+    s_list.append(ds)
+    threads = [threading.Thread(target=t.monitor_bid, args=(s, )) for s in s_list]
+    for t in threads:
+        t.start()  #启动一个线程
+    for t in threads:
+        t.join()  #等待每个线程执行结束
+    '''
+
+    

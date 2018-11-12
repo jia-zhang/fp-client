@@ -13,7 +13,6 @@ class StockUtil():
     def __init__(self):
         self.logger = Logger("StockUtil")
         self.valid_stock_file = "valid_stock.csv"
-        #self.last_trading_date = self.get_last_trading_date()
         pass
     
     def is_bid_time(self):
@@ -46,7 +45,12 @@ class StockUtil():
                 td_list.append(td_text)
             #print(','.join(td_list))
             ret.append(td_list)
-        return ret[1:]   
+        return ret[1:]  
+    
+    def get_last_trading_date(self):
+        sql_cmd = "select value from tb_configuration where name='last_trading_date'"
+        db = StockDb()
+        return db.query_db(sql_cmd)[0][0]
 
     def get_yesterday(self): 
         today=datetime.date.today() 
@@ -76,18 +80,6 @@ class StockUtil():
             return ''
         return output
     
-    def get_static_file_from_id(self,stock_id):
-        return "./data/static/%s.static.json"%(stock_id)
-    
-    def get_dynamic_file_from_id(self,stock_id,dump_type='daily'):
-        return "./data/dynamic/%s.json.%s"%(stock_id,dump_type)
-    
-    def check_dynamic_data(self):
-        ret = False
-        if self.get_last_trading_date() == self.get_last_trading_date_from_file():
-            ret = True
-        return ret
-
     def get_stock_list_from_file(self,file_name):
         '''
         从csv文件中获取列表，返回一个数组
@@ -97,11 +89,8 @@ class StockUtil():
             return []
         with open(file_name,'r') as f:
             output = f.read()
-        return output.split(',')
-    
-    def save_fp_list(self,stock_list):
-        file_name = "./output/fp_%s.csv"%(self.get_today())  
-        self.save_stock_list_to_file(stock_list,file_name)
+        return output.split(',')    
+
 
     
     def save_stock_list_to_file(self,stock_list,file_name):
@@ -110,7 +99,7 @@ class StockUtil():
         with open(file_name,'w') as f:
             f.write(s_list_str)    
     
-    def get_last_trading_date(self):
+    def get_trading_date(self):
         '''
         获取最近一次的交易日。获取上证指数的最后交易数据即可。
         '''
@@ -120,11 +109,7 @@ class StockUtil():
         return eval(resp.text.replace('day','"day"').replace('open','"open"').replace('low','"low"').\
         replace('high','"high"').replace('close','"close"').replace('volume','"volume"'))[-1]['day']
     
-    def get_last_trading_date_from_file(self,stock_id='sh000001'):
-        file_name = self.get_dynamic_file_from_id(stock_id)
-        output = self.check_file_and_read(file_name)
-        stock_detail = eval(output)
-        return stock_detail[-1]['day']
+    
 
     def get_summary_status_after_close(self,stock_list):
         ret = []
@@ -157,6 +142,7 @@ class StockUtil():
         market_status = self.get_market_status(0,100)
         for i in range(100):
             if float(market_status[i]['changepercent'])<9.7:
+                self.logger.info("涨停个数：%s"%i)
                 return i       
 
     def get_market_limit_down_number(self):
@@ -167,6 +153,7 @@ class StockUtil():
         market_status = self.get_market_status(1,100)
         for i in range(100):
             if float(market_status[i]['changepercent'])>-9.7:
+                self.logger.info("跌停个数：%s"%i)
                 return i       
 
     
@@ -187,11 +174,26 @@ class StockUtil():
         cur_price = float(info[3])
         last_day_price = float(info[2])
         open_price = float(info[1])
+        stock_name = info[0]  
+        #print(len(stock_name))  
+        #print(2*'aaa')
+        if len(stock_name)<4:
+            stock_name = "%s%s"%(' '*(4-len(stock_name)),stock_name)
         aoi = round((cur_price-last_day_price)*100/last_day_price,2)
         aoi_open = round((open_price-last_day_price)*100/last_day_price,2)
         volume = round(float(info[8])/1000000,2)
         rmb = round(float(info[9])/100000000,2)
-        ret = "%s(%s) | %s%% | %s%% | %s | %s | %s"%(info[0],stock_id,aoi_open,aoi,info[3],volume,rmb)
+        db = StockDb()
+        last_turnover = db.get_last_turnover(stock_id)
+        last_pchg = db.get_last_pchg(stock_id)
+        float_shares = round(db.get_float_shares_from_id(stock_id)/100000000,2)
+        ret = "%6s(%8s) | %8s%% | %8s%% | %8s | %8s(万手) | %8s(亿) | %8s | %8s%% | %8s(亿)"%(info[0],stock_id,aoi_open,aoi,info[3],volume,rmb,last_turnover,last_pchg,float_shares)
+        if(aoi>9.7):
+            ret = "└(^o^)┘ %s"%ret
+        elif (aoi>aoi_open and aoi>3):
+            ret = "-($_$)- %s"%ret
+        else:
+            ret = "------- %s"%ret
         return ret
     
     def get_live_mon_items_bid(self,stock_id):
@@ -397,44 +399,16 @@ class StockUtil():
             self.logger.info("stock_id: %s,float_share is zero"%(stock_id))
         return ret
     
-    def add_property(self,stock_id,property_dict):
-        '''
-        为某股票添加一个新的字段，会改写股票的static文件。
-        #t.add_propery('sh600000',{"tag1":{"ddd":"ccc"}})    
-        '''
-        file_name = self.get_static_file_from_id(stock_id)
-        f = open(file_name,'r',encoding='utf-8')
-        info = json.load(f)
-        f.close()
-        for key in property_dict.keys():
-            info[stock_id][key] = property_dict[key]
-        self.logger.info(info)
-        with open(file_name,'w') as f:
-            f.write(json.dumps(info))
-    
-    def remove_property(self,stock_id,property_key):
-        '''
-        删除某股票的某个字段，会改写股票的static文件。
-        #t.remove_property('sh600000','tag1')
-        '''
-        file_name = self.get_static_file_from_id(stock_id)
-        f = open(file_name,'r',encoding='utf-8')
-        info = json.load(f)
-        f.close()
-        info[stock_id].pop(property_key)
-        self.logger.info(info)
-        with open(file_name,'w') as f:
-            f.write(json.dumps(info))
-
 if __name__ == '__main__':
     t = StockUtil()
+    #print(t.get_last_trading_date())
     #print(t.get_volume('sz000002',0))
     #print(t.get_volume_sum('sh600290',3))
     #print(len(t.get_market_status(0,200)))
     #print(t.get_market_status(1,100)[99]['changepercent'])
     #print(t.get_market_status(0,100)[99]['changepercent'])
-    #print(t.get_market_limit_up_number())
-    #print(t.get_market_limit_down_number())
+    t.get_market_limit_up_number()
+    t.get_market_limit_down_number()
     #print(t.get_stock_name_from_id('sz000002'))
     #print(t.get_suspend_stocks())
     #print(t.get_live_price('sz000673'))

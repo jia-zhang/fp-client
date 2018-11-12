@@ -129,3 +129,6 @@ http://quotes.money.163.com/service/lrb_601398.html
 
 六、现金流表（CSV格式）
 http://quotes.money.163.com/service/xjllb_601398.html
+
+竞价monitor
+https://xueqiu.com/stock/cata/stocklist.json?page=2&size=30&order=desc&orderby=percent&type=11%2C12&_=1541985912951

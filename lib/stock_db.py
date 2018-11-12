@@ -59,6 +59,16 @@ class StockDb():
         #print(ret)
         return ret
     
+    def get_last_turnover(self,stock_id):
+        date = self.get_last_trading_date()
+        sql_cmd = "select turnover from tb_daily_info where date='%s' and stock_id='%s'"%(date,stock_id)
+        return self.query_db(sql_cmd)[0][0]
+    
+    def get_last_pchg(self,stock_id):
+        date = self.get_last_trading_date()
+        sql_cmd = "select pchg from tb_daily_info where date='%s' and stock_id='%s'"%(date,stock_id)
+        return self.query_db(sql_cmd)[0][0]
+    
     def get_stock_name_from_id(self,stock_id):
         return self.get_stock_basic(stock_id)[0][1]
     
@@ -117,7 +127,7 @@ class StockDb():
 if __name__ == '__main__':
     #print("hello")
     t = StockDb()
-    t.tmp()
+    print(t.get_last_turnover('sz000002'))
         #time.sleep(1)
     '''
     stock_list = t.get_fp_result('2018-11-09','龙头').split(',')
