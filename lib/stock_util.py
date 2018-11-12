@@ -178,7 +178,8 @@ class StockUtil():
         #print(len(stock_name))  
         #print(2*'aaa')
         if len(stock_name)<4:
-            stock_name = "%s%s"%(' '*(4-len(stock_name)),stock_name)
+            stock_name = "%s%s"%('  '*(4-len(stock_name)),stock_name)
+        print(len(stock_name))
         aoi = round((cur_price-last_day_price)*100/last_day_price,2)
         aoi_open = round((open_price-last_day_price)*100/last_day_price,2)
         volume = round(float(info[8])/1000000,2)
