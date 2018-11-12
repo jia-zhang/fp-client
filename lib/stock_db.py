@@ -39,10 +39,12 @@ class StockDb():
         ret = self.query_db(sql_cmd)
         return ret[0][0]    
     
+    '''
     def get_last_dump_date(self):
         sql_cmd = "select date from tb_daily_info where stock_id='sh000001' order by date desc limit 1"
         ret = self.query_db(sql_cmd)
         return ret[0][0]
+    '''
 
     def get_last_trading_date(self):
         sql_cmd = "select value from tb_configuration where name='last_trading_date'"
@@ -115,6 +117,11 @@ class StockDb():
         sql_cmd = "select value from tb_configuration where name='rcpt_list'"
         ret = self.query_db(sql_cmd)
         return ret[0][0].split(',')
+    
+    def get_last_n_days(self,n):
+        sql_cmd = "select date from tb_daily_info where stock_id='sh000001' order by date desc limit %s"%(n)
+        ret = self.query_db(sql_cmd)
+        return DataFrame(ret)[0].values.tolist()
 
     def tmp(self):
         #float_shares = self.get_float_shares_from_id(s)
@@ -131,7 +138,9 @@ class StockDb():
     
 if __name__ == '__main__':
     #print("hello")
-    t = StockDb()
+    t = StockDb('ss.db')
+    print(t.get_last_n_days(5))
+    #print(t.get_rcpt_list())
     #print(t.get_rcpt_list())
     #t.add_pre_dump_daily('2018-11-12')
     #print(t.get_last_turnover('sz000002'))
@@ -144,7 +153,7 @@ if __name__ == '__main__':
         print(t.get_stock_status(s,14))
     #print(t.get_last_trading_date())
     '''
-    s = 'sz002940'
+    #s = 'sz002940'
     
     #print(t.get_stock_list())
     '''

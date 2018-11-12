@@ -19,8 +19,8 @@ class StockDump():
         self.logger = Logger("StockDump")
         self.db = StockDb('ss.db')
         self.stock_list = self.db.get_stock_list()
-        self.last_dump_date = self.db.get_last_dump_date()
-        self.default_count = 1 #if dump occurs everyday, it should only get the data of last trading date   
+        #self.last_dump_date = self.db.get_last_dump_date()
+        self.default_count = 9 #if dump occurs everyday, it should only get the data of last trading date   
         #self.last_trading_date = self.get_last_trading_date_live()   
         self.last_trading_date = '2018-11-12'
 
@@ -42,14 +42,14 @@ class StockDump():
         '''
         #headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36'}
         ret = ''
-        proxies = {'http': 'http://18.197.117.119:8080', 'https': 'http://18.197.117.119:8080'}
+        #proxies = {'http': 'http://18.197.117.119:8080', 'https': 'http://18.197.117.119:8080'}
         detail_url = ("http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?"
                     "symbol=%s&scale=%s&ma=no&datalen=%s"
         )%(stock_id,time_range,count)
         #self.logger.info(detail_url)
         try:
-            resp = requests.get(detail_url, proxies = proxies, timeout=60)
-            #resp = requests.get(detail_url, timeout=60)
+            #resp = requests.get(detail_url, proxies = proxies, timeout=60)
+            resp = requests.get(detail_url, timeout=60)
             if resp.status_code!=200:
                 requests.raise_for_status()
             ret = resp.text.replace('day','"day"').replace('open','"open"').replace('low','"low"')\
@@ -62,7 +62,7 @@ class StockDump():
             if retry_num>0:
             #如果不是200就重试，每次递减重试次数
                 self.logger.info("Non 200 respose, retry. Status_code=%s"%(resp.status_code))
-                return self.get_stock_detail(url,stock_id,time_range,count,retry_num-1)
+                return self.get_stock_detail(stock_id,time_range,count,retry_num-1)
         return ret 
 
     def get_pchg_turnover(self,stock_id,date): #get price change percent for one day
@@ -107,13 +107,14 @@ class StockDump():
         if stock_detail_list==[]:
             f.close()
             return
-        combined_info = self.combine_stock_info(stock_id,stock_detail_list[0])
-        f.write("%s\n"%(combined_info))
+        for stock_detail in stock_detail_list:
+            combined_info = self.combine_stock_info(stock_id,stock_detail)
+            f.write("%s\n"%(combined_info))
         f.close()
 
     def pre_dump_mt(self,thread_num):
         #stock_list = self.stock_list
-        stock_list = ['sz002711']
+        stock_list = ['sh000001']
         threads = []
         for s in stock_list:
             t=threading.Thread(target=self.pre_dump,args=(s,))
@@ -131,7 +132,10 @@ class StockDump():
         price_low = stock_detail_dict['low']
         price_close = stock_detail_dict['close']
         volume = stock_detail_dict['volume']
-        pchg_turnover = self.get_pchg_turnover(stock_id,date)
+        if(stock_id=='sh000001'):
+            pchg_turnover = ['','']
+        else:
+            pchg_turnover = self.get_pchg_turnover(stock_id,date)
         #float_shares = self.db.get_float_shares_from_id(stock_id)
         turn_over = pchg_turnover[1]
         p_chg = pchg_turnover[0]
@@ -148,7 +152,7 @@ class StockDump():
         volume = stock_detail_dict['volume']
         float_shares = self.db.get_float_shares_from_id(stock_id)
         turn_over = round(float(volume)*100/float_shares,2)
-        p_chg = self.get_pchg(stock_id,date)
+        p_chg = self.get_pchg_turnover(stock_id,date)
         sql_cmd = "insert into tb_daily_info values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"\
         %(date,stock_id,price_open,price_high,price_low,price_close,volume,turn_over,p_chg)
         self.db.update_db(sql_cmd)
@@ -171,10 +175,10 @@ class StockDump():
     def dump_stock_daily(self,stock_id):
         return self.dump_stock(stock_id,240,self.default_count)
     
-    def dump_stock_weekly(self):
+    def dump_stock_weekly(self,stock_id):
         return self.dump_stock(stock_id,1680,self.default_count)
     
-    def dump_stock_monthly(self):
+    def dump_stock_monthly(self,stock_id):
         return self.dump_stock(stock_id,7200,self.default_count)
 
     
@@ -199,71 +203,7 @@ class StockDump():
             stock_detail_list = self.dump_stock_daily(stock_id)
             self.update_db_from_list(stock_id,stock_detail_list)
 
-    
-    def dump_stock_dynamic(self,time_range,count,force=1):
-        '''
-        Dump stock info from sina.
-        time_range = 240, 1680, 7200 - daily, weekly, monthly
-        count = number of data need to  be dumpped        
-        '''  
-        self.logger.info(self.util.get_last_trading_date())
-        s_list = self.util.get_valid_stocks()
-        if time_range == 240:
-            dump_type = 'daily'
-        elif time_range == 1680:
-            dump_type = 'weekly'
-        elif time_range == 7200:
-            dump_type = 'monthly'
-        for s in s_list:
-            self.logger.info("Dumping stock %s dynamic %s..."%(s,dump_type))
-            #file_name = self.util.get_dynamic_file_from_id(s)
-            file_name = self.util.get_dynamic_file_from_id(s,dump_type)
-            #self.logger.info(file_name)
-            if (force==0 and os.path.exists(file_name)):
-                self.logger.info("%s already exists, skip"%(s))
-                continue
-            stock_detail = self.get_stock_detail(s,time_range,count)
-            with open(file_name,'w') as f:
-                f.write(stock_detail)
-            
-    def dump_stock_static(self,force=0): #Decrypted, remove it later
-        '''
-        Get some very basic static information from xueqiu.com
-        if force==1, will overwrite exists json file, please be careful
-        '''
-        headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36'}
-        re_fload_shares = re.compile(r'"float_shares":(\d*?),')
-        re_stock_name = re.compile(r'"name":(.*?),')
-        re_market_capital = re.compile(r'"market_capital":(.*?),')
-        s_list = self.util.get_valid_stocks()
-        for s in s_list:
-            self.logger.info("Dumping stock static %s..."%(s))
-            file_name = self.util.get_static_file_from_id(s)
-            if (force==0 and os.path.exists(file_name)):
-                self.logger.info("%s already exists, skip"%(s))
-                continue
-            try:
-                master_dict = {}
-                resp = requests.get("https://xueqiu.com/S/%s"%(s),headers=headers)
-                if (resp.status_code==404):
-                    self.logger.info("Get code 404 on stock %s"%(s))                    
-                    continue
-                elif(resp.status_code!=200):
-                    self.logger.info("Get code %s on stock %s"%(resp.status_code,s))
-                    continue
-                resp.encoding = 'utf-8'            
-                stock_dict = {}
-                stock_dict['float_shares'] = str(re_fload_shares.findall(resp.text)[0])  
-                stock_dict['stock_name'] = str(re_stock_name.findall(resp.text)[0])
-                stock_dict['market_capital'] = str(re_market_capital.findall(resp.text)[0])
-                master_dict[s] = stock_dict
-                with open(file_name,'w') as f:
-                    f.write(json.dumps(master_dict))
-            except:
-                self.logger.info("exception on stock %s!"%(s))
-    
-    def update_db_1(self,info_list):
-        pass
+
 
 
 if __name__ == '__main__':
@@ -277,19 +217,18 @@ if __name__ == '__main__':
     
     stock_list = t.db.get_stock_list()
     f = open('predump-2018-11-12.csv','r') 
-    count = 0
     download_list = []
     for line in f.readlines():
         item = line.replace('\n','').split(',')
         #download_list.append(item[1])
-        if (item[0]!='2018-11-12'):
-            continue
+        #if (item[0]!='2018-11-12'):
+        #    continue
         sql_cmd = "insert into tb_daily_info values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"\
         %(item[0],item[1],item[2],item[3],item[4],item[5],item[6],item[7],item[8])
         t.db.update_db(sql_cmd)
-    #print(count)
     #print(list(set(stock_list)^set(download_list)))
     f.close()
+    
     
     #stock_list = ['sz000002','sh600000']
     

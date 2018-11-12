@@ -20,6 +20,8 @@ def get_pchange(stock_id):
     for line in r_list:
         tmp = line.split(',')
         date = tmp[0]
+        if(tmp[-1]=='None'):
+            continue
         pchg = round(float(tmp[-1]),2)
         #print("%s:%s:%s"%(ori_stock_id,date,pchg))
         update_pchg(ori_stock_id,date,pchg)
@@ -120,7 +122,19 @@ if __name__ == '__main__':
     for s in stock_info:
         print(s)
     '''
-    get_pchange('sh600000')
+    db = StockDb()
+    s_list = db.get_stock_list()
+    q_stock = "sh600086"
+    start = 0   
+    for s in s_list:
+        if s==q_stock:
+            start = 1
+        if start==0:
+            print("skip stock %s"%(s))
+            continue
+        print("Update pchg with %s"%(s))
+        get_pchange(s)
+        #time.sleep(1)
     #print(get_pchange('sz000002'))
     #test1()
     

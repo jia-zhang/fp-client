@@ -37,7 +37,7 @@ def analyze():
     return s_list  
 
 def get_top_n(stock_list,n,day_num):
-    print(stock_list)
+    print(len(stock_list))
     f = StockFilter()
     return f.get_top_increase(stock_list,n,day_num)
 
@@ -75,8 +75,8 @@ def add_to_list(full_list, sub_list):
 
 def fp():
     db = StockDb()
-    stock_list = db.get_stock_list()
-    print(get_top_n(stock_list,10,9))
+    stock_list = db.get_trading_stock_list()
+    print(get_top_n(stock_list,10,5))
     '''
     full_list = []
     top_n_list = get_top_n()
