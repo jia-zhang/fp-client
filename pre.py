@@ -4,23 +4,13 @@ sys.path.append("./lib")
 sys.path.append(".")
 from stock_dump import StockDump
 from stock_filter import StockFilter
-
-def prepare_env():
-    s = StockDump()
-    s.logger.info("Downloading all valid stock information...")
-    #s.download_valid_stock_list()
-    s.logger.info("Downloading stock dynamic data...")
-    #s.download_dynamic_from_url()
-    s.logger.info("Downloading stock static data...")
-    #s.download_static_from_url()
-    s.logger.info("Unzipping files...")    
-    s.unzip_dynamic('./data')
-    #s.unzip_static('./data')
+from stock_db import StockDb
 
 def pre_analyze():
     file_name = "pre_list.csv"
+    db = StockDb()
     f = StockFilter()
-    s_list = f.util.get_trading_stocks()
+    s_list = db.get_trading_stock_list()
     s_list = f.get_big_increase_within_days(s_list,5,9)
     if len(s_list)>0:
         result = ','.join(s_list)
@@ -28,9 +18,7 @@ def pre_analyze():
         f.write(result)
     #print(s_list)
 
-if __name__ == '__main__':    
-    prepare_env()
-    #test()
+if __name__ == '__main__':        
     pre_analyze()
     
     

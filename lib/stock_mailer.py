@@ -49,6 +49,7 @@ class StockMailer():
     def send_mail_from_local(self,rcpt,msg_subject,msg_body):
         ret=True
         try:
+            self.logger.info("Send mail from QQ to %s"%(rcpt))
             msg=MIMEText(msg_body,'plain','utf-8')
             msg['From']=formataddr(["jiazzz",self.my_sender])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
             msg['To']=formataddr(["whoareyou",rcpt])              # 括号里的对应收件人邮箱昵称、收件人邮箱账号

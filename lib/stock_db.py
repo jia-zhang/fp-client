@@ -118,8 +118,18 @@ class StockDb():
         ret = self.query_db(sql_cmd)
         return ret[0][0].split(',')
     
-    def get_last_n_days(self,n):
+    def get_last_n_dates(self,n):
         sql_cmd = "select date from tb_daily_info where stock_id='sh000001' order by date desc limit %s"%(n)
+        ret = self.query_db(sql_cmd)
+        return DataFrame(ret)[0].values.tolist()
+    
+    def get_last_n_pchg(self,stock_id, n):
+        sql_cmd = "select pchg from tb_daily_info where stock_id='%s' order by date desc limit %s"%(stock_id,n)
+        ret = self.query_db(sql_cmd)
+        return DataFrame(ret)[0].values.tolist()
+    
+    def get_last_n_turnover(self,stock_id, n):
+        sql_cmd = "select turnover from tb_daily_info where stock_id='%s' order by date desc limit %s"%(stock_id,n)
         ret = self.query_db(sql_cmd)
         return DataFrame(ret)[0].values.tolist()
 
@@ -138,8 +148,10 @@ class StockDb():
     
 if __name__ == '__main__':
     #print("hello")
-    t = StockDb('ss.db')
-    print(t.get_last_n_days(5))
+    t = StockDb()
+    s_list = t.get_last_n_pchg('sz000002',5)
+    s_list.reverse()
+    print(s_list)
     #print(t.get_rcpt_list())
     #print(t.get_rcpt_list())
     #t.add_pre_dump_daily('2018-11-12')

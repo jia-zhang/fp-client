@@ -15,6 +15,12 @@ class StockUtil():
         self.db = StockDb()
         self.valid_stock_file = "valid_stock.csv"
         pass
+
+    def is_list_sorted(self,lst):
+        if sorted(lst) == lst:
+            return 'asc'
+        elif sorted(lst, reverse=True) == lst:
+            return 'desc'
     
     def is_bid_time(self):
         t = datetime.datetime.now()
@@ -104,15 +110,11 @@ class StockUtil():
 
     def get_summary_status_after_close(self,stock_list):
         ret = []
-        title = "股票名称（股票ID）| 开盘涨幅 | 当前涨幅 | 当前价格 | 成交量（万手）| 成交金额（亿）| 3日涨幅 | 3日总换手 | 当日高点差"
+        title = "  股票名称（股票ID）       | 开盘涨幅  | 当前涨幅  | 当前价格 |    成交量      |   成交金额   | 昨日换手 | 昨日涨幅  |    流通股"
         ret.append(title)
         for s in stock_list:
-            status = self.get_live_mon_items(s)
-            delta = self.get_delta(s,3)
-            volume_sum = self.get_volume_sum(s,3)
-            lift = self.get_lift_in_one_day(s,0)
-            status_plus = " | %s | %s | %s"%(delta,volume_sum,lift)
-            ret.append("%s%s"%(status,status_plus))
+            status = self.get_live_mon_items(s)            
+            ret.append(status)
         return ret
 
     def get_market_status(self,direction,numbers):
@@ -373,7 +375,10 @@ class StockUtil():
     
 if __name__ == '__main__':
     t = StockUtil()
-    print(t.get_delta('sz000622',3))
+    a = [1,2,3,4,5]
+    b = [5,4,3,2,1]
+    print(t.is_list_sorted(b))
+    #print(t.get_delta('sz000622',3))
     #print(t.get_last_trading_date())
     #print(t.get_volume('sz000002',0))
     #print(t.get_volume_sum('sh600290',3))
