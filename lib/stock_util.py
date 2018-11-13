@@ -161,6 +161,8 @@ class StockUtil():
         #ret = re_info.findall(r.text)[0]
         ret = r.text
         return ret
+    
+    
 
     def get_live_mon_items(self,stock_id):
         info = self.get_live_status(stock_id).split(',')

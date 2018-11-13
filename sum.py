@@ -5,15 +5,13 @@ from stock_util import StockUtil
 import time
 import datetime
 from stock_mailer import StockMailer
+import pandas as pd
 
-def get_yesterday(): 
-    today=datetime.date.today() 
-    oneday=datetime.timedelta(days=1) 
-    yesterday=today-oneday  
-    return yesterday.strftime('%Y_%m_%d')
-
-def get_today():
-    return datetime.date.today().strftime('%Y_%m_%d')
+def test():
+    data = [['Alex',10],['Bob',12],['Clarke',13]]
+    df = pd.DataFrame(data,columns=['Name','Age'])
+    h = df.to_html()
+    print(h)
 
 def summarize():
     yesterday = get_yesterday()
@@ -42,5 +40,5 @@ def send_sum_mail():
 if __name__ == '__main__':       
     #monitor(file_name,60)
     #monitor_after_bid(file_name,60)
-    summarize()
+    test()
     #send_sum_mail()

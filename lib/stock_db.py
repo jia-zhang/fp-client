@@ -133,6 +133,15 @@ class StockDb():
         ret = self.query_db(sql_cmd)
         return DataFrame(ret)[0].values.tolist()
 
+    def get_float_shares_dict(self):
+        sql_cmd = "select stock_id,float_shares from tb_basic_info"
+        ret = self.query_db(sql_cmd)
+        df = DataFrame(ret)
+        stock_id_list = df[0].values.tolist()
+        float_share_list = df[1].values.tolist()
+        ret_dict = dict(zip(stock_id_list,float_share_list))
+        return ret_dict
+
     def tmp(self):
         #float_shares = self.get_float_shares_from_id(s)
         info_list = self.get_daily_info()
@@ -149,9 +158,11 @@ class StockDb():
 if __name__ == '__main__':
     #print("hello")
     t = StockDb()
-    s_list = t.get_last_n_pchg('sz000002',5)
-    s_list.reverse()
-    print(s_list)
+    print(t.get_float_shares_dict())
+    #print(df)
+    #print(df[0].values.tolist()[0:100])
+    #print(df[1].values.tolist()[0:100])
+    #print(s_list)
     #print(t.get_rcpt_list())
     #print(t.get_rcpt_list())
     #t.add_pre_dump_daily('2018-11-12')
