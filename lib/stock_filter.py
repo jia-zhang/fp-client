@@ -125,8 +125,9 @@ class StockFilter():
         self.logger.info("Get increase rate increase within %s days"%(day_num))
         ret = []
         for s in stock_list: 
+            self.logger.info("Handling stock %s..."%(s))
             increase_list = self.db.get_last_n_pchg(s,day_num)           
-            if self.util.is_list_sorted(increase_list)=='desc':
+            if increase_list!=[] and self.util.is_list_sorted(increase_list)=='desc':
                 self.logger.info("Add stock %s"%(s))
                 ret.append(s)
         self.logger.info("Found %s stocks after filtering get_increase_rate_increase within %s days"%(len(ret),day_num))
