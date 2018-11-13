@@ -71,14 +71,6 @@ def get_potential_2(day_num):
     #print(len(ret))
     #return ret
 
-
-def add_to_list(full_list, sub_list):
-    ret = full_list
-    for i in sub_list:
-        if i not in ret:
-            ret.append(i)
-    return ret
-
 def fp():
     db = StockDb()
     #print(get_potential_2(5))
