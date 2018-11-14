@@ -15,9 +15,11 @@ class StockDump():
         self.default_count = default_count #if dump occurs everyday, it should only get the data of last trading date           
         self.pre_dump_file = 'predump.csv'
     
-    def update_last_trading_date(self):
-        sql_cmd = "update tb_configuration set value='%s' where name='last_trading_date'"%(self.last_trading_date)
-        self.db.update_db(sql_cmd)
+    def update_last_trading_date(self,last_trading_date):
+        self.logger.info("Update last trading date to db")
+        db = StockDb()
+        sql_cmd = "update tb_configuration set value='%s' where name='last_trading_date'"%(last_trading_date)
+        db.update_db(sql_cmd)
 
     def get_last_trading_date_live(self):        
         self.logger.info("Getting last trading date live...")
@@ -28,6 +30,7 @@ class StockDump():
         replace('high','"high"').replace('close','"close"').replace('volume','"volume"'))[-1]['day']   
         ret = date.split(' ')[0]
         self.logger.info("Last trading date is %s"%(ret))
+        self.update_last_trading_date(ret)
         return ret
 
     def pre_dump(self):    
@@ -47,15 +50,12 @@ class StockDump():
         f.close()   
         self.logger.info('Pre-dump from sina done...')
     
-    def update_db(self):
-        self.logger.info("Start store pre-dumped info to database...")
-        db = StockDb('ss.db')
+    def check_diff(self,db_name='ss.db'):
+        self.logger.info("Check diff between stock list from db and pre-dump")
+        db = StockDb(db_name)
         total_stocks = db.get_stock_list()
-
         f = open(self.pre_dump_file,'r') 
-        last_trading_date = self.get_last_trading_date_live()
         recorded_stocks = []
-        no_data_stocks = []
         for line in f.readlines():
             item = line.replace('\n','').split(',')    
             if item[0].startswith('60'):
@@ -63,38 +63,50 @@ class StockDump():
             else:
                 stock_id = "sz%s"%(item[0])
             recorded_stocks.append(stock_id)   
-            if (item[1]=='0.000'):
-                no_data_stocks.append(item[0])
-                continue
-            sql_cmd = "insert into tb_daily_info values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"\
-            %(last_trading_date,stock_id,item[1],item[2],item[3],item[4],item[5],item[6],item[7])
-            #db.update_db(sql_cmd)   
         f.close()   
-        print('Total stock from db:%s,stocks from prelist:%s'%(len(total_stocks),len(recorded_stocks)))     
+        self.logger.info('Total stock from db:%s,total stock from pre-dump:%s'%(len(total_stocks),len(recorded_stocks)))     
         test = []
         for s in total_stocks:
             if s not in recorded_stocks:
                 test.append(s)
-        print('===Stocks in total, but not in prelist====')
-        print(test)
+        self.logger.info('===Stocks in total, but not in prelist====')
+        self.logger.info(test)
         test=[]
         for s in recorded_stocks:
             if s not in total_stocks:
                 test.append(s)
-        print('===Stocks in prelist,but not in total===')
-        print(test)
+        self.logger.info('===Stocks in prelist,but not in total===')
+        self.logger.info(test)        
+    
+    def update_db(self,db_name='ss.db'):
+        self.logger.info("Start store pre-dumped info to database...")
+        db = StockDb(db_name)
+        total_stocks = db.get_stock_list()
+        f = open(self.pre_dump_file,'r') 
+        last_trading_date = self.get_last_trading_date_live()
+        no_data_stocks = []
+        for line in f.readlines():
+            item = line.replace('\n','').split(',') 
+            if (item[1]=='0.000'):
+                self.logger.info("Stock %s has no data, skip it"%(item[0]))
+                continue               
+            if item[0].startswith('60'):
+                stock_id = "sh%s"%(item[0])
+            else:
+                stock_id = "sz%s"%(item[0])            
+            sql_cmd = "insert into tb_daily_info values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"\
+            %(last_trading_date,stock_id,item[1],item[2],item[3],item[4],item[5],item[6],item[7])
+            db.update_db(sql_cmd)   
+        f.close()           
         self.logger.info("There are total %s stock which have no data..."%(len(no_data_stocks)))
         self.logger.info("Store pre-dumped info to database done...")
 
 if __name__ == '__main__':
     t = StockDump()
+    t.get_last_trading_date_live()
     #t.pre_dump()
-    t.update_db()
-    #t.pre_dump_mt(10)  
-    #t.pre_dump_st()
-    #date = '2018-11-13'
-    #stock_id = 'sz000002'
-    #print(t.pre_dump_today(stock_id))
+    #t.check_diff()
+    #t.update_db()
     
    
     

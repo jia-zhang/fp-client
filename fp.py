@@ -36,13 +36,13 @@ def analyze():
     print(s_list)
     return s_list  
 
-def get_top_n(n,day_num):
+def get_top_n(n,day_num,remove_new_stock=1):
     f = StockFilter()
     pre_list = f.util.get_stock_list_from_file("pre_list.csv") 
     f = StockFilter()
-    return f.get_top_increase(pre_list,n,day_num)
+    return f.get_top_increase(pre_list,n,day_num,remove_new_stock)
 
-def get_potential(day_num):
+def get_potential(day_num):  #只是获取涨幅变大的而已
     file_name = "pre_list.csv"    
     ret = []
     f = StockFilter()
@@ -76,7 +76,7 @@ def fp():
     #stock_list = db.get_trading_stock_list()
     #print(get_top_n(stock_list,10,5))    
     full_list = []
-    top_n_list = get_top_n(10,8)
+    top_n_list = get_top_n(10,8) # 8日内涨幅前10
     potential_list = get_potential(5)
     potential_list_2 = get_potential_2(5)
     print(top_n_list)
@@ -97,7 +97,6 @@ def fp():
     except:
         pass
     finally:
-        print(m.msg_body_list)
         m.send_fp_mail()
     
 

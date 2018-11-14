@@ -57,8 +57,6 @@ class StockDb():
         '''
         sql_cmd = "select * from tb_basic_info where stock_id='%s'"%(stock_id)
         ret = self.query_db(sql_cmd)
-        #print(stock_id)
-        #print(ret)
         return ret
     
     def get_last_turnover(self,stock_id):
@@ -76,6 +74,12 @@ class StockDb():
     
     def get_float_shares_from_id(self,stock_id):
         return self.get_stock_basic(stock_id)[0][2]
+
+    def get_in_mkt_date_from_id(self,stock_id):
+        ret = self.get_stock_basic(stock_id)[0][3]
+        if ret==None:
+            ret = '1999-01-01'
+        return ret
     
     def get_stock_status(self,table_name,stock_id,day_n):
         '''
@@ -158,7 +162,8 @@ class StockDb():
 if __name__ == '__main__':
     #print("hello")
     t = StockDb()
-    print(t.get_float_shares_dict())
+    print(t.get_in_mkt_date_from_id('sz000002'))
+    print(t.get_in_mkt_date_from_id('sz300571'))
     #print(df)
     #print(df[0].values.tolist()[0:100])
     #print(df[1].values.tolist()[0:100])

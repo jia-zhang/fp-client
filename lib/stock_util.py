@@ -54,10 +54,12 @@ class StockUtil():
             ret.append(td_list)
         return ret[1:]  
     
-    def get_last_trading_date(self):
-        sql_cmd = "select value from tb_configuration where name='last_trading_date'"
-        db = StockDb()
-        return db.query_db(sql_cmd)[0][0]
+    def get_stock_trading_dates(self,stock_id):
+        in_mkt_date = self.db.get_in_mkt_date_from_id(stock_id)
+        last_trading_date = self.db.get_last_trading_date()
+        d1 = datetime.datetime.strptime(in_mkt_date,"%Y-%m-%d")
+        d2 = datetime.datetime.strptime(last_trading_date,"%Y-%m-%d")
+        return (d2-d1).days
 
     def get_yesterday(self): 
         today=datetime.date.today() 
@@ -116,9 +118,6 @@ class StockUtil():
             status = self.get_live_mon_items(s)            
             ret.append(status)
         return ret
-
-    
-
     
     def get_live_status_list(self,stock_list):
         s_list_str = ','.join(stock_list)
@@ -200,54 +199,6 @@ class StockUtil():
         last_day_price = float(info[2])
         return round((cur_price-last_day_price)*100/last_day_price,2)  
     
-    def is_big_drop_within_days(self,stock_id,day_num,drop_criteria):
-        ret = False
-        for day in range(day_num):
-            drop = self.get_increase_amount(stock_id,day)            
-            if drop<drop_criteria:
-                self.logger.info("Stock %s big drop(%s)>criteria(%s)...Drop day: %s"%(stock_id,drop,drop_criteria,day))
-                ret = True
-        return ret
-    
-    def is_big_lift_within_days(self,stock_id,day_num,lift_criteria):
-        ret = False
-        for day in range(day_num):
-            lift = self.get_lift_in_one_day(stock_id,day)            
-            if lift<lift_criteria:
-                self.logger.info("Stock %s big lift(%s)>criteria(%s)...lift day: %s"%(stock_id,lift,lift_criteria,day))
-                ret = True
-        return ret
-    
-    def is_volume_increase_within_days(self,stock_id,day_num,increase_criteria=1.1):
-        ret = True
-        for day in range(day_num):            
-            volume = self.get_volume(stock_id,day)
-            if day==0 or round(last_day_volume/volume,2)>increase_criteria:
-                last_day_volume = volume
-                continue
-            else:
-                self.logger.info("Stock %s volume(%s) in day %s > last day volume(%s),please check..."%(stock_id,volume,day,last_day_volume))
-                ret = 0
-                break
-        return ret
-    
-    def is_volume_increase_within_days_2(self,stock_id,day_num,increase_criteria=1.5):
-        ret = False
-        for day in range(day_num):            
-            volume = self.get_volume(stock_id,day)
-            if day==0:
-                last_day_volume = volume                
-                continue
-            elif round(last_day_volume/volume,2)>increase_criteria:
-                self.logger.info("Found stock %s last day volume(%s)/volume(%s) in day %s > %s..."%(stock_id,last_day_volume,volume,day,increase_criteria))
-                ret = True
-                break
-            last_day_volume = volume
-        return ret
-    
-    def is_volume_sum_ok(self,stock_id,day_num,sum_criteria):
-        return self.get_volume_sum(stock_id,day_num)>=sum_criteria
-    
     def get_delta(self,stock_id,day_num):        
         if day_num<=0 or day_num>10:
             self.logger.info("Please specify a daynum which between 1~10...")
@@ -256,59 +207,11 @@ class StockUtil():
         return float(self.db.query_db(sql_cmd)[0][0])
     
     def get_lift_in_one_day(self,stock_id,day_num):
-        '''
-        获取前day_num天的高点到收盘价的差值，用来回避大阴线。
-        day_num取值在0~9之间。
-        '''
-        if day_num<0 or day_num>9:
-            self.logger.info("Please specify a daynum which between 0~9...")
-            return 0 
-        file_name = self.get_dynamic_file_from_id(stock_id)
-        output = self.check_file_and_read(file_name)
-        if output=='':
-            return 0
-        stock_detail = eval(output)
-        if abs(-1-day_num)>len(stock_detail):
-            self.logger.info("%s:No data on day %s"%(stock_id,day_num))
-            return 0     
-        if self.last_trading_date != stock_detail[-1]['day']:
-            self.logger.info("Stock %s's last trading day not equals to sh000001's last trading day, please check..."%(stock_id))
-            return 0   
-        price_high = float(stock_detail[-1-day_num]['high'])
-        #print(price_start)        
-        price_end = float(stock_detail[-1-day_num]['close'])
-        #print(price_end)
-        lift_status = round((price_end-price_high)*100/price_high,2)
-        return lift_status
+        pass
 
 
     def get_increase_amount(self,stock_id,day_num):
-        '''
-        获取某股票前day_num的当天涨跌幅。需要保证动态数据json文件里面有值，否则会报错(to be fixed)
-        day_num取值范围在0~9之间。
-        比如，获取前一天的get_increase_amount('sz000002',1)
-        获取最后一天的get_increase_amount('sz000002',0)
-        '''
-        if day_num<0 or day_num>9:
-            self.logger.info("Please specify a daynum which between 0~9...")
-            return 0 
-        file_name = self.get_dynamic_file_from_id(stock_id)
-        output = self.check_file_and_read(file_name)
-        if output=='':
-            return 0
-        stock_detail = eval(output)
-        if abs(-2-day_num)>len(stock_detail):
-            self.logger.info("%s:No data on day %s"%(stock_id,day_num))
-            return 0     
-        if self.last_trading_date != stock_detail[-1]['day']:
-            self.logger.info("Stock %s's last trading day not equals to sh000001's last trading day, please check..."%(stock_id))
-            return 0   
-        price_start = float(stock_detail[-2-day_num]['close'])
-        #print(price_start)        
-        price_end = float(stock_detail[-1-day_num]['close'])
-        #print(price_end)
-        lift_status = (price_end-price_start)*100/price_start
-        return lift_status
+        pass
 
     def get_volume_sum(self,stock_id,day_num):
         ret = 0
@@ -317,37 +220,12 @@ class StockUtil():
         return round(ret,2)
     
     def get_volume(self,stock_id,day_num):
-        '''
-        获取某股票前day_num的当天换手率。day_num=0代表最后一天，day_num=1代表最后前一天
-        '''
-        file_name = self.get_dynamic_file_from_id(stock_id)
-        output = self.check_file_and_read(file_name)
-        if output == '':
-            return 0
-        stock_detail = eval(output)
-        if abs(-1-day_num)>len(stock_detail):
-            self.logger.info("%s:No data on day %s"%(stock_id,day_num))
-            return 0
-        volume = int(stock_detail[-1-day_num]['volume'])
-
-        file_name = self.get_static_file_from_id(stock_id)
-        if not os.path.exists(file_name):
-            return 0
-        f = open(file_name,'r')
-        json_output = json.load(f)
-        f.close()
-        gb = json_output[stock_id]['float_shares']
-        if(gb==0):
-            self.logger.info("stock_id: %s,float_share is zero"%(stock_id))
-        try:
-            ret = round(volume*100/float(gb),2)
-        except:
-            self.logger.info("stock_id: %s,float_share is zero"%(stock_id))
-        return ret
+        pass
     
 if __name__ == '__main__':
     t = StockUtil()    
-    print(t.get_market_status(0,100))
+    #print(t.get_market_status(0,100))
+    print(t.get_stock_trading_dates('sz300751'))
     #print(t.get_delta('sz000622',3))
     #print(t.get_last_trading_date())
     #print(t.get_volume('sz000002',0))

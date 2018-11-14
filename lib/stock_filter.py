@@ -11,28 +11,27 @@ from pandas import DataFrame
 
 class StockFilter():
     def __init__(self):
-        #headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36'}
-        #detail_url = "http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh000001&scale=240&ma=no&datalen=5"
-        #resp = requests.get(detail_url)
         self.logger = Logger("StockFilter")
         self.db = StockDb()
-        self.util = StockUtil()
-        #self.last_trading_day = eval(resp.text.replace('day','"day"').replace('open','"open"').replace('low','"low"').\
-        #replace('high','"high"').replace('close','"close"').replace('volume','"volume"'))[-1]['day']
+        self.util = StockUtil()        
 
     def check_if_time_available(self):
         pass
     
-    def get_top_increase(self,stock_list,n,day_num):
+    def get_top_increase(self,stock_list,n,day_num,remove_new_stock):
         d = {}
         for s in stock_list:
             d[s] = self.util.get_delta(s,day_num)
         #print(d)
         sorted_list = sorted(d.items(), key=lambda d:d[1],reverse=True) 
-        #print(sorted_list)
+        print(sorted_list)
         ret = []
-        for i in range(n):
-            ret.append(sorted_list[i][0])
+        for i in range(1000):
+            stock_id = sorted_list[i][0]
+            if self.util.get_stock_trading_dates(stock_id)>30:
+                ret.append(stock_id)
+            if len(ret)==n:
+                break
         return ret
     
     def get_volume_within_days(self,stock_list,day_num,volume_critiria):  
@@ -97,39 +96,20 @@ class StockFilter():
                     break
         ret = list(set(stock_list) ^ set(tmp))
         self.logger.info("Found %s stocks after filtering big lift within %s days"%(len(ret),day_num))
-        return ret
+        return ret    
     
-    def filter_big_drop_within_days(self,stock_list,day_num,drop_criteria):
-        '''
-        过滤stock_list,如果在day_num内，出现大阴线（下跌超过drop_critiria），则剔除这些股票。
-        返回一个stock列表，去掉了所有n日内有大阴线的股票。
-        '''
-        tmp = []
-        self.logger.info("Filter big drop within %s days"%(day_num))
-        #print(stock_list)
-        for s in stock_list:
-            #self.logger.info(s)
-            for day in range(day_num):
-                drop = self.util.get_increase_amount(s,day)
-                #self.logger.info("%s:%s"%(s,drop))
-                if drop<drop_criteria:
-                    #pdb.set_trace()
-                    self.logger.info("Remove stock %s big drop>criteria...Drop day: %s"%(s,day))
-                    tmp.append(s)
-                    break
-        ret = list(set(stock_list) ^ set(tmp))
-        self.logger.info("Found %s stocks after filtering big drop within %s days"%(len(ret),day_num))
-        return ret
     
     def get_increase_rate_increase(self,stock_list,day_num,increase_criteria=1):
         self.logger.info("Get increase rate increase within %s days"%(day_num))
-        ret = []
+        ret = []        
         for s in stock_list: 
-            self.logger.info("Handling stock %s..."%(s))
-            increase_list = self.db.get_last_n_pchg(s,day_num)           
-            if increase_list!=[] and self.util.is_list_sorted(increase_list)=='desc':
-                self.logger.info("Add stock %s"%(s))
-                ret.append(s)
+            try:            
+                increase_list = self.db.get_last_n_pchg(s,day_num)           
+                if increase_list!=[] and self.util.is_list_sorted(increase_list)=='desc':
+                    self.logger.info("Function get_increase_rate_increase, add stock %s"%(s))
+                    ret.append(s)
+            except:
+                self.logger.info("Exception on stock:%s"%(s))
         self.logger.info("Found %s stocks after filtering get_increase_rate_increase within %s days"%(len(ret),day_num))
         return ret
     

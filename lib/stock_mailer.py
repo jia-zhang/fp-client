@@ -28,7 +28,7 @@ class StockMailer():
         self.msg_body_list.append(stock_status)
         self.add_msg_body('=======================\n')
 
-    def send_fp_mail(self):
+    def send_fp_mail(self,real_send=0):
         today = self.util.get_today()
         msg_subject = "复盘结果"
         #stock_status = self.util.get_summary_status_after_close(stock_list)  
@@ -36,11 +36,11 @@ class StockMailer():
         print(self.msg_body_list)  
         msg_body = "\n".join(self.msg_body_list)
         self.logger.info(msg_body)
-        for rcpt in self.rcpt_list:
-            self.logger.info("Sending mail to %s"%(rcpt))
-            #self.send_mail_to_one_rcpt(rcpt,msg_subject,msg_body)
-            self.send_mail_from_qq(rcpt,msg_subject,msg_body)
-            time.sleep(10)
+        if real_send==1:
+            for rcpt in self.rcpt_list:
+                self.logger.info("Sending mail to %s"%(rcpt))                
+                self.send_mail_from_qq(rcpt,msg_subject,msg_body)
+                time.sleep(10)
     
     def send_mail(self,rcpt_list):
         #for rcpt in rcpt_list:
