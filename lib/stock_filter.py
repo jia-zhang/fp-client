@@ -24,7 +24,7 @@ class StockFilter():
             d[s] = self.util.get_delta(s,day_num)
         #print(d)
         sorted_list = sorted(d.items(), key=lambda d:d[1],reverse=True) 
-        print(sorted_list)
+        #print(sorted_list)
         ret = []
         for i in range(1000):
             stock_id = sorted_list[i][0]
@@ -56,7 +56,7 @@ class StockFilter():
         self.logger.info("Start, get delta>%s stocks..."%(delta_criteria))
         ret=[]
         for s in stock_list:
-            delta = self.util.get_delta(s,day_num)
+            delta = self.db.get_sum_n_pchg(s,day_num)
             #self.logger.info("%s:%s"%(s,delta))
             if(delta>delta_criteria and s not in ret):
                 ret.append(s)
@@ -81,20 +81,15 @@ class StockFilter():
         过滤stock_list,如果在day_num内，出现大阴线形态2（高点和收盘差超过lift_critiria），则剔除这些股票。
         返回一个stock列表，去掉了所有n日内有大阴线形态2的股票。
         '''
-        tmp = []
+        ret = []
         self.logger.info("Filter big lift within %s days"%(day_num))
         #print(stock_list)
         for s in stock_list:
-            #self.logger.info(s)
-            for day in range(day_num):
-                lift = self.util.get_lift_in_one_day(s,day)
-                #self.logger.info("%s:%s"%(s,drop))
-                if lift<lift_criteria:
-                    #pdb.set_trace()
-                    self.logger.info("Remove stock %s big lift>criteria...Lift day: %s"%(s,day))
-                    tmp.append(s)
-                    break
-        ret = list(set(stock_list) ^ set(tmp))
+            sum_lift = self.db.get_sum_n_lift(s,day_num)
+            if sum_lift<lift_criteria:
+                self.logger.info("Remove stock %s"%(s))
+            else:
+                ret.append(s)
         self.logger.info("Found %s stocks after filtering big lift within %s days"%(len(ret),day_num))
         return ret    
     

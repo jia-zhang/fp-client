@@ -20,7 +20,7 @@ class StockMon():
         r1 = requests.get(url,headers=headers,cookies=cookies)
         #self.logger.info(r1.text)
         stock_list = eval(r1.text)['stocks']
-        return stock_list
+        return DataFrame(stock_list)
 
 
     def get_market_status(self,direction,page_number,page_size):
@@ -124,12 +124,38 @@ class StockMon():
         date = db.get_last_trading_date()
         for t in fp_types:
             s_list = db.get_fp_result(date,t).split(',')
-            self.check_stock_list(s_list)        
+            self.check_stock_list(s_list)     
+
+    def get_bid_sample_list(self,top_n=50): #run on 9:20, get stock_list which is in top n
+        url = 'https://xueqiu.com/stock/cata/stocklist.json?page=1&size=%s&order=desc&orderby=percent&type=11%%2C12&_=1541985912951'%(top_n)
+        df = self.get_xueqiu_info(url)
+        df1 =  df[['code','name','current','percent','volume']]  
+        print(df1)  
+        s_list = df1['code'].values.tolist()
+        #print(s_list)
+        return s_list
+    
+    def mon_bid(self):
+        sample_list = self.get_bid_sample_list()
+        while True:
+            time.sleep(20) #every 20 seconds, check diff(new_list,sample_list)...
+            new_list = self.get_bid_sample_list()
+            check_list = []
+            for s in new_list:
+                if s not in sample_list:
+                    check_list.append(s)
+            for s in check_list:
+                self.logger.info("================Monitor==============")
+                self.logger.info("股票名称（股票ID）| 涨幅 | 竞买价 | 竞买量（万手）") 
+                status = self.util.get_live_mon_items_bid(s)
+                self.logger.info(status)
 
 if __name__ == '__main__':
     t = StockMon()
     #t.get_top_and_bottom(50)
-    t.check_fp_list()
+    #t.get_bid_sample_list()
+    t.mon_bid()
+
     '''
     url = 'https://xueqiu.com/stock/cata/stocklist.json?page=1&size=100&order=desc&orderby=percent&type=11%2C12&_=1541985912951'
     url2 = 'https://xueqiu.com/stock/cata/stocklist.json?page=1&size=30&order=desc&orderby=percent&type=11%2C12&_=1541985912951'

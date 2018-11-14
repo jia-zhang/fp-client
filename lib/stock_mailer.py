@@ -29,7 +29,6 @@ class StockMailer():
         self.add_msg_body('=======================\n')
 
     def send_fp_mail(self,real_send=0):
-        today = self.util.get_today()
         msg_subject = "复盘结果"
         #stock_status = self.util.get_summary_status_after_close(stock_list)  
         print(type(self.msg_body_list))
@@ -42,27 +41,7 @@ class StockMailer():
                 self.send_mail_from_qq(rcpt,msg_subject,msg_body)
                 time.sleep(10)
     
-    def send_mail(self,rcpt_list):
-        #for rcpt in rcpt_list:
-        pass
-
-    def send_mail_from_local(self,rcpt,msg_subject,msg_body):
-        ret=True
-        try:
-            self.logger.info("Send mail from QQ to %s"%(rcpt))
-            msg=MIMEText(msg_body,'plain','utf-8')
-            msg['From']=formataddr(["jiazzz",self.my_sender])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
-            msg['To']=formataddr(["whoareyou",rcpt])              # 括号里的对应收件人邮箱昵称、收件人邮箱账号
-            msg['Subject']="%s-%s"%(msg_subject,self.date)                # 邮件的主题，也可以说是标题
-            server=smtplib.SMTP(self.mail_server,self.mail_port)  # 发件人邮箱中的SMTP服务器，端口是465
-            server.login(self.my_sender, self.my_pass)  # 括号中对应的是发件人邮箱账号、邮箱密码
-            server.sendmail(self.my_sender,[rcpt,],msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
-            server.quit()# 关闭连接
-        except Exception:# 如果 try 中的语句没有执行，则会执行下面的 ret=False
-            #print("aaabbb")
-            ret=False
-        return ret
-    
+ 
     
     def send_mail_from_qq(self,rcpt,msg_subject,msg_body):
         ret=True
@@ -105,22 +84,6 @@ class StockMailer():
             msg['Subject']="%s-%s"%(msg_subject,self.date)                # 邮件的主题，也可以说是标题
             server=smtplib.SMTP_SSL("smtp.126.com", 465)  # 发件人邮箱中的SMTP服务器，端口是465
             server.login("jenixe@126.com", "trend1980")  # 括号中对应的是发件人邮箱账号、邮箱密码
-            server.sendmail(self.my_sender,[rcpt,],msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
-            server.quit()# 关闭连接
-        except Exception:# 如果 try 中的语句没有执行，则会执行下面的 ret=False
-            #print("aaabbb")
-            ret=False
-        return ret
-    
-    def send_mail_from_ses(self,rcpt,msg_subject,msg_body):
-        ret=True
-        try:
-            msg=MIMEText(msg_body,'plain','utf-8')
-            msg['From']=formataddr(["jiazzz","jenixg@gmail.com"])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
-            msg['To']=formataddr(["whoareyou",rcpt])              # 括号里的对应收件人邮箱昵称、收件人邮箱账号
-            msg['Subject']="%s-%s"%(msg_subject,self.date)                # 邮件的主题，也可以说是标题
-            server=smtplib.SMTP_SSL("email-smtp.us-east-1.amazonaws.com", 465)  # 发件人邮箱中的SMTP服务器，端口是465
-            server.login("AKIAJ2Z7MJOL6TNGN6QA", "AqCyiM2iMvMSxHwZbD/vsgIR0001RXodmfYSSjEOlqWx")  # 括号中对应的是发件人邮箱账号、邮箱密码
             server.sendmail(self.my_sender,[rcpt,],msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
             server.quit()# 关闭连接
         except Exception:# 如果 try 中的语句没有执行，则会执行下面的 ret=False

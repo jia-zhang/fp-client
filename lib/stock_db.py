@@ -127,11 +127,30 @@ class StockDb():
         ret = self.query_db(sql_cmd)
         return DataFrame(ret)[0].values.tolist()
     
+
     def get_last_n_pchg(self,stock_id, n):
         sql_cmd = "select pchg from tb_daily_info where stock_id='%s' order by date desc limit %s"%(stock_id,n)
         ret = self.query_db(sql_cmd)
         return DataFrame(ret)[0].values.tolist()
+
+    def get_sum_n_pchg(self,stock_id,n):
+        sql_cmd = "select sum(pchg) as total_turnover from (select * from tb_daily_info where stock_id='%s' order by date desc limit %s)"%(stock_id,n)
+        ret = self.query_db(sql_cmd)
+        return ret[0][0]
     
+    def get_sum_n_lift(self,stock_id,n):
+        sql_cmd = "select sum(lift) from (select *,((close-high)*100/close+(close-open)*100/open)/2 as lift \
+        from tb_daily_info where stock_id='%s' order by date desc limit %s)"%(stock_id,n)
+        ret = self.query_db(sql_cmd)
+        return ret[0][0]
+    
+    def get_last_n_lift(self,stock_id,n):
+        sql_cmd = "select lift from (select *,((close-high)*100/close+(close-open)*100/open)/2 as lift \
+        from tb_daily_info where stock_id='%s' order by date desc limit %s)"%(stock_id,n)
+        ret = self.query_db(sql_cmd)
+        return ret
+        
+
     def get_last_n_turnover(self,stock_id, n):
         sql_cmd = "select turnover from tb_daily_info where stock_id='%s' order by date desc limit %s"%(stock_id,n)
         ret = self.query_db(sql_cmd)
@@ -162,8 +181,9 @@ class StockDb():
 if __name__ == '__main__':
     #print("hello")
     t = StockDb()
-    print(t.get_in_mkt_date_from_id('sz000002'))
-    print(t.get_in_mkt_date_from_id('sz300571'))
+    print(t.get_sum_n_lift('sh600530',7))
+    #print(t.get_in_mkt_date_from_id('sz000002'))
+    #print(t.get_in_mkt_date_from_id('sz300571'))
     #print(df)
     #print(df[0].values.tolist()[0:100])
     #print(df[1].values.tolist()[0:100])

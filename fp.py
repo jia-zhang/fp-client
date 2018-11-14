@@ -43,31 +43,33 @@ def get_top_n(n,day_num,remove_new_stock=1):
     return f.get_top_increase(pre_list,n,day_num,remove_new_stock)
 
 def get_potential(day_num):  #只是获取涨幅变大的而已
-    file_name = "pre_list.csv"    
-    ret = []
+    file_name = "pre_list.csv"
     f = StockFilter()
-    s_list = f.util.get_stock_list_from_file(file_name)
-    s_list = f.get_increase_rate_increase(s_list,day_num)    
+    pre_list = f.util.get_stock_list_from_file(file_name)
+    s_list = f.get_increase_rate_increase(pre_list,day_num) 
+    s_list = f.get_delta_within_days(s_list,7,0)
+    s_list = f.get_delta_within_days(s_list,5,5)
+    s_list = f.get_delta_within_days(s_list,3,10)
+    s_list = f.filter_big_lift_within_days(s_list,7,0)
+    #print(s_list)   
+    #s_list2 = f.get_turnover_burst(pre_list,day_num)
+    #print(s_list2)
+    #s_list.extend(s_list2)
     return s_list
 
 def get_potential_2(day_num):
-    ret = []
     db = StockDb()
-    f = StockFilter()
-    
+    f = StockFilter()    
     trading_stock_list = db.get_trading_stock_list()  
     pre_list = f.util.get_stock_list_from_file("pre_list.csv") 
     s_list = list(set(trading_stock_list)-set(pre_list))
     s_list = f.get_increase_rate_increase(s_list,day_num)
-    
-    s_list = f.get_turnover_burst(s_list,day_num)
+    s_list = f.get_delta_within_days(s_list,7,0)
+    s_list = f.get_delta_within_days(s_list,5,5)
+    s_list = f.filter_big_lift_within_days(s_list,7,0)
+    #s_list = f.get_turnover_burst(s_list,day_num)
     print(s_list)
-    #for s in s_list:
-    #    if f.util.get_delta(s,3)<10:
-    #        ret.append(s)   
     return s_list
-    #print(len(ret))
-    #return ret
 
 def fp():
     db = StockDb()
@@ -77,8 +79,8 @@ def fp():
     #print(get_top_n(stock_list,10,5))    
     full_list = []
     top_n_list = get_top_n(10,8) # 8日内涨幅前10
-    potential_list = get_potential(5)
-    potential_list_2 = get_potential_2(5)
+    potential_list = get_potential(2)
+    potential_list_2 = get_potential_2(3)
     print(top_n_list)
     print(potential_list)
     print(potential_list_2)
@@ -97,7 +99,7 @@ def fp():
     except:
         pass
     finally:
-        m.send_fp_mail()
+        m.send_fp_mail(1)
     
 
 if __name__ == '__main__':    
