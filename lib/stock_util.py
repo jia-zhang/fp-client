@@ -117,37 +117,7 @@ class StockUtil():
             ret.append(status)
         return ret
 
-    def get_market_status(self,direction,numbers):
-        detail_url = "http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?\
-        page=1&num=%s&sort=changepercent&asc=%s&node=hs_a&symbol=&_s_r_a=init"%(numbers,direction)
-        resp = requests.get(detail_url)
-        return eval(resp.text.replace('symbol','"symbo"').replace('code','"code"').replace('name','"name"').replace('trade','"trade"').\
-        replace('pricechange','"pricechange"').replace('changepercent','"changepercent"').replace('buy','"buy"').replace('sell','"sell"').\
-        replace('settlement','"settlement"').replace('open','"open"').replace('high','"high"').replace('low','"low"').\
-        replace('volume','"volume"').replace('amount','"amount"').replace('ticktime','"ticktime"').replace('per:','"per":').\
-        replace('pb','"pb"').replace('mktcap','"mktcap"').replace('nmc','"nmc"').replace('turnoverratio','"turnoverratio"'))
     
-    def get_market_limit_up_number(self):
-        '''
-        获取市场涨停个数
-        '''
-        ret = 0
-        market_status = self.get_market_status(0,100)
-        for i in range(100):
-            if float(market_status[i]['changepercent'])<9.7:
-                self.logger.info("涨停个数：%s"%i)
-                return i       
-
-    def get_market_limit_down_number(self):
-        '''
-        获取市场跌停个数
-        '''
-        ret = 0
-        market_status = self.get_market_status(1,100)
-        for i in range(100):
-            if float(market_status[i]['changepercent'])>-9.7:
-                self.logger.info("跌停个数：%s"%i)
-                return i       
 
     
     def get_live_status_list(self,stock_list):
@@ -376,10 +346,8 @@ class StockUtil():
         return ret
     
 if __name__ == '__main__':
-    t = StockUtil()
-    a = [1,2,3,4,5]
-    b = [5,4,3,2,1]
-    print(t.is_list_sorted(b))
+    t = StockUtil()    
+    print(t.get_market_status(0,100))
     #print(t.get_delta('sz000622',3))
     #print(t.get_last_trading_date())
     #print(t.get_volume('sz000002',0))
