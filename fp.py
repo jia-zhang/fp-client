@@ -51,6 +51,7 @@ def get_potential(day_num):  #只是获取涨幅变大的而已
     s_list = f.get_delta_within_days(s_list,5,5)
     s_list = f.get_delta_within_days(s_list,3,10)
     s_list = f.filter_big_lift_within_days(s_list,7,0)
+    s_list = f.get_mkt_share_below_limit(s_list)
     #print(s_list)   
     #s_list2 = f.get_turnover_burst(pre_list,day_num)
     #print(s_list2)
@@ -67,6 +68,7 @@ def get_potential_2(day_num):
     s_list = f.get_delta_within_days(s_list,7,0)
     s_list = f.get_delta_within_days(s_list,5,5)
     s_list = f.filter_big_lift_within_days(s_list,7,0)
+    s_list = f.get_mkt_share_below_limit(s_list)
     #s_list = f.get_turnover_burst(s_list,day_num)
     print(s_list)
     return s_list
@@ -77,7 +79,6 @@ def fp():
     #print(get_potential(5))
     #stock_list = db.get_trading_stock_list()
     #print(get_top_n(stock_list,10,5))    
-    full_list = []
     top_n_list = get_top_n(10,8) # 8日内涨幅前10
     potential_list = get_potential(2)
     potential_list_2 = get_potential_2(3)
@@ -99,7 +100,7 @@ def fp():
     except:
         pass
     finally:
-        m.send_fp_mail(1)
+        m.send_fp_mail(0)
     
 
 if __name__ == '__main__':    

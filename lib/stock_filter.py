@@ -92,6 +92,19 @@ class StockFilter():
                 ret.append(s)
         self.logger.info("Found %s stocks after filtering big lift within %s days"%(len(ret),day_num))
         return ret    
+
+    def get_mkt_share_below_limit(self,stock_list,mkt_share_limit=100):
+        #Get market share below 100E...
+        ret = []
+        self.logger.info("Get mkt share which is below %sE..."%(mkt_share_limit))
+        for s in stock_list:
+            float_shares = round(self.db.get_float_shares_from_id(s)/100000000,2)
+            cur_price = float(self.util.get_live_status(s).split(',')[3])
+            mkt_share = float_shares*cur_price
+            if mkt_share<mkt_share_limit:
+                self.logger.info("Add stock %s which mkt share<%s"%(s,mkt_share_limit))
+                ret.append(s)
+        return ret
     
     
     def get_increase_rate_increase(self,stock_list,day_num,increase_criteria=1):
