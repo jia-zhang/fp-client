@@ -134,7 +134,7 @@ http://quotes.money.163.com/service/xjllb_601398.html
 https://xueqiu.com/stock/cata/stocklist.json?page=2&size=30&order=desc&orderby=percent&type=11%2C12&_=1541985912951
 
 
-https://xueqiu.com/stock/search.json?code=000622
+d
 
 大概每天下午3:30新浪会出数据，163会在出数据
 

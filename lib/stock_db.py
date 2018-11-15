@@ -37,7 +37,13 @@ class StockDb():
     def get_fp_result(self,fp_date,fp_type):
         sql_cmd = "select stock_list from tb_fp_result where date='%s' and type='%s'"%(fp_date,fp_type)
         ret = self.query_db(sql_cmd)
-        return ret[0][0]    
+        return ret[0][0]  
+
+    def get_all_fp_result(self,fp_date):
+        sql_cmd = "select stock_list from tb_fp_result where date='%s'"%(fp_date)
+        ret = self.query_db(sql_cmd)
+        return DataFrame(ret)[0].values.tolist()
+        #return (','.join(DataFrame(ret)[0].values.tolist())).split(',')
     
     '''
     def get_last_dump_date(self):
@@ -59,15 +65,11 @@ class StockDb():
         ret = self.query_db(sql_cmd)
         return ret
     
-    def get_last_turnover(self,stock_id):
-        date = self.get_last_trading_date()
-        sql_cmd = "select turnover from tb_daily_info where date='%s' and stock_id='%s'"%(date,stock_id)
-        return self.query_db(sql_cmd)[0][0]
+    def get_turnover_by_daynum(self,stock_id,day_n):
+        return self.get_stock_status(stock_id,day_n)[7]
     
-    def get_last_pchg(self,stock_id):
-        date = self.get_last_trading_date()
-        sql_cmd = "select pchg from tb_daily_info where date='%s' and stock_id='%s'"%(date,stock_id)
-        return self.query_db(sql_cmd)[0][0]
+    def get_pchg_by_daynum(self,stock_id,day_n):
+        return self.get_stock_status(stock_id,day_n)[8]
     
     def get_stock_name_from_id(self,stock_id):
         return self.get_stock_basic(stock_id)[0][1]
@@ -81,13 +83,13 @@ class StockDb():
             ret = '1999-01-01'
         return ret
     
-    def get_stock_status(self,table_name,stock_id,day_n):
+    def get_stock_status(self,stock_id,day_n):
         '''
         day_n = 0 means last day
         day_n = 1 means the day before last day 
         No exception handling here(lazy...), please don't query day_n>15?
         '''
-        sql_cmd = "select * from %s where stock_id='%s' order by date desc"%(table_name,stock_id)
+        sql_cmd = "select * from tb_daily_info where stock_id='%s' order by date desc"%(stock_id)
         ret = self.query_db(sql_cmd)
         return ret[day_n]
     
@@ -106,16 +108,6 @@ class StockDb():
         all_stocks = self.get_stock_list()
         trading_stocks = self.get_trading_stock_list()
         return list(set(all_stocks) ^ set(trading_stocks))
-    
-    def get_daily_info(self):
-        sql_cmd = "select * from tb_daily_info where turnover=''"
-        ret = self.query_db(sql_cmd)
-        return ret
-
-    
-    def stock_exist(self,stock_id):
-        pass
-        #sql_cmd = "select * "
 
     def get_rcpt_list(self):
         sql_cmd = "select value from tb_configuration where name='rcpt_list'"
@@ -134,13 +126,18 @@ class StockDb():
         return DataFrame(ret)[0].values.tolist()
 
     def get_sum_n_pchg(self,stock_id,n):
-        sql_cmd = "select sum(pchg) as total_turnover from (select * from tb_daily_info where stock_id='%s' order by date desc limit %s)"%(stock_id,n)
+        sql_cmd = "select sum(pchg) as total_pchg from (select * from tb_daily_info where stock_id='%s' order by date desc limit %s)"%(stock_id,n)
         ret = self.query_db(sql_cmd)
         return ret[0][0]
     
     def get_sum_n_lift(self,stock_id,n):
         sql_cmd = "select sum(lift) from (select *,((close-high)*100/close+(close-open)*100/open)/2 as lift \
         from tb_daily_info where stock_id='%s' order by date desc limit %s)"%(stock_id,n)
+        ret = self.query_db(sql_cmd)
+        return ret[0][0]
+    
+    def get_sum_n_turnover(self,stock_id,n):
+        sql_cmd = "select sum(turnover) as total_turnover from (select * from tb_daily_info where stock_id='%s' order by date desc limit %s)"%(stock_id,n)
         ret = self.query_db(sql_cmd)
         return ret[0][0]
     
@@ -181,7 +178,12 @@ class StockDb():
 if __name__ == '__main__':
     #print("hello")
     t = StockDb()
-    print(t.get_sum_n_lift('sh600530',7))
+    #fp_list = t.get_all_fp_result('2018-11-14')
+    #print(fp_list)
+    #print(t.get_turnover_by_daynum('sz000002',1))
+    print(t.get_pchg_by_daynum('sz000002',1))
+    #print(t.get_turnover_by_daynum('sz00002',0))
+    #print(t.get_sum_n_lift('sh600530',7))
     #print(t.get_in_mkt_date_from_id('sz000002'))
     #print(t.get_in_mkt_date_from_id('sz300571'))
     #print(df)

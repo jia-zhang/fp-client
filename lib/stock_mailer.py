@@ -12,7 +12,8 @@ class StockMailer():
         self.my_pass = 'hymygengdhnydhfd'              # 发件人邮箱密码(当时申请smtp给的口令)
         self.date = datetime.datetime.now().strftime('%Y/%m/%d')
         #self.rcpt_list = ["jenixe@126.com"]
-        self.rcpt_list = ["jenixe@126.com","286531599@qq.com","3797069@qq.com"]
+        #self.rcpt_list = ["jenixe@126.com","286531599@qq.com","3797069@qq.com"]
+        self.rcpt_list = "jenixe@126.com,286531599@qq.com,3797069@qq.com"
         self.util = StockUtil()
         self.mail_server = '127.0.0.1'
         self.mail_port = 25
@@ -36,10 +37,14 @@ class StockMailer():
         msg_body = "\n".join(self.msg_body_list)
         self.logger.info(msg_body)
         if real_send==1:
+            '''
             for rcpt in self.rcpt_list:
                 self.logger.info("Sending mail to %s"%(rcpt))                
                 self.send_mail_from_qq(rcpt,msg_subject,msg_body)
                 time.sleep(10)
+            '''
+            self.logger.info("Sending mail to %s"%(self.rcpt_list))                
+            self.send_mail_from_qq(self.rcpt_list,msg_subject,msg_body)
     
  
     

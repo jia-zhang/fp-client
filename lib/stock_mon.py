@@ -5,6 +5,7 @@ import time
 import threading
 import requests
 from pandas import DataFrame
+import pandas as pd
 
 class StockMon():
     def __init__(self):
@@ -110,12 +111,78 @@ class StockMon():
     def get_top_and_bottom(self,n):
         status = self.get_market_status(0,1,n)
         df = DataFrame(status)
-        df1 = df[['code','name','changepercent','trade','open','high','low','volume','turnoverratio','mktcap']]
+        df1 = df[['symbo','name','changepercent','trade','open','high','low','volume','turnoverratio','mktcap']]
         print(df1)
         status = self.get_market_status(1,1,n)
         df = DataFrame(status)
-        df1 = df[['code','name','changepercent','trade','open','high','low','volume','turnoverratio','mktcap']]
+        df1 = df[['symbo','name','changepercent','trade','open','high','low','volume','turnoverratio','mktcap']]
         print(df1)
+    
+    def get_top_n_df(self,direction,n):
+        #direction=0 means top n, direction=1 means bottom n
+        status = self.get_market_status(direction,1,n)
+        df = DataFrame(status)
+        ret = df[['symbo','name','changepercent','trade','open','turnoverratio']]
+        print(ret)
+        return ret
+    
+    def sum_top_n_list(self,direction,n):
+        '''
+        tmp_csv = 'tmp.csv'
+        df = self.get_top_n_df(direction,n)
+        df.to_csv(tmp_csv,index=False)
+        f = open(tmp_csv,'r')
+        out = open('out.csv','w')
+        line_number = 0
+        sample_count = 3
+        for line in f.readlines():
+            item = line.replace('\n','')
+            if line_number==0:
+                target_line = ",%s,"%(item)                
+            else:
+                s = item.split(',')[0]
+                s_name = item.split(',')[1]
+                #self.logger.info(s)
+                if s_name.startswith('N'):
+                    target_line = "%s,%s,"%(line_number,item)
+                else:
+                    db = StockDb()  
+                    tmp = []
+                    turn_over_list = db.get_last_n_turnover(s,sample_count)
+                    for t in turn_over_list:
+                        tmp.append(str(t))
+                    turn_over_sample = ','.join(tmp)
+                    pchg_list = db.get_last_n_pchg(s,sample_count)
+                    for t in pchg_list:
+                        tmp.append(str(t))
+                    pchg_sample = ','.join(tmp)
+                    target_line = ("%s,%s,%s,%s"%(line_number,item,turn_over_sample,pchg_sample))
+            line_number = line_number+1
+            out.write("%s\n"%(target_line))
+        f.close()
+        out.close()
+        '''
+        df1 = pd.read_csv('out.csv',index_col=0)
+        with open('output.html','w',encoding="gb2312") as f:
+            f.write(df1.to_html())
+
+    def sum(self,stock_list):
+        db = StockDb()    
+        self.logger.info("StockID | StockName | 3日涨幅 | 5日涨幅 | 7日涨幅 | 3日换手 | 5日换手 | 7日换手")  
+        for s in stock_list:    
+            try: 
+                stock_name = db.get_stock_name_from_id(s)   
+                pchg_3 = round(db.get_sum_n_pchg(s,3),2)
+                pchg_5 = round(db.get_sum_n_pchg(s,5),2)
+                pchg_7 = round(db.get_sum_n_pchg(s,7),2)
+                to_3 = round(db.get_sum_n_turnover(s,3),2)
+                to_5 = round(db.get_sum_n_turnover(s,5),2)
+                to_7 = round(db.get_sum_n_turnover(s,7),2)
+                self.logger.info("%s | %s | %s | %s | %s | %s | %s | %s"%(s,stock_name,pchg_3,pchg_5,pchg_7,to_3,to_5,to_7))
+            except:
+                self.logger.info("Exception on stock %s"%(s))
+
+    
 
 
     def check_fp_list(self):
@@ -138,23 +205,32 @@ class StockMon():
     def mon_bid(self):
         sample_list = self.get_bid_sample_list()
         while True:
-            time.sleep(20) #every 20 seconds, check diff(new_list,sample_list)...
+            time.sleep(5) #every 20 seconds, check diff(new_list,sample_list)...
             new_list = self.get_bid_sample_list()
             check_list = []
             for s in new_list:
                 if s not in sample_list:
                     check_list.append(s)
             for s in check_list:
+                if s.startswith('60'):
+                    stock_id = "sh%s"%(s)
+                else:
+                    stock_id = "sz%s"%(s)    
                 self.logger.info("================Monitor==============")
                 self.logger.info("股票名称（股票ID）| 涨幅 | 竞买价 | 竞买量（万手）") 
-                status = self.util.get_live_mon_items_bid(s)
+                status = self.util.get_live_mon_items_bid(stock_id)
                 self.logger.info(status)
 
 if __name__ == '__main__':
     t = StockMon()
+    #stock_list = t.get_top_n_list(100)
+    #print(stock_list)
+    t.sum_top_n_list(0,100)
     #t.get_top_and_bottom(50)
+    #df = DataFrame(t.get_market_status(0,1,50))
+    #print(df)
     #t.get_bid_sample_list()
-    t.mon_bid()
+    #t.mon_bid()
 
     '''
     url = 'https://xueqiu.com/stock/cata/stocklist.json?page=1&size=100&order=desc&orderby=percent&type=11%2C12&_=1541985912951'

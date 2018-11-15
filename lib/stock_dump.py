@@ -35,6 +35,7 @@ class StockDump():
 
     def pre_dump(self):    
         self.logger.info('Starting pre-dump from sina...')    
+        self.get_last_trading_date_live()
         f = open(self.pre_dump_file,'w')
         mon = StockMon()
         for i in range(1,500):
@@ -103,10 +104,10 @@ class StockDump():
 
 if __name__ == '__main__':
     t = StockDump()
-    t.get_last_trading_date_live()
+    #t.get_last_trading_date_live()
     #t.pre_dump()
     #t.check_diff()
-    #t.update_db()
+    t.update_db()
     
    
     

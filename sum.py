@@ -5,6 +5,7 @@ from stock_util import StockUtil
 import time
 import datetime
 from stock_mailer import StockMailer
+from stock_db import StockDb
 import pandas as pd
 
 def test():
@@ -28,17 +29,26 @@ def summarize():
         f.write('\n')
     f.close()
 
-def send_sum_mail():
-    m = StockMailer()
-    today = get_today()
-    msg_subject = "Summary info - %s"%(today)
-    input_file_name = "output/summary_%s.csv"%(today)
-    with open(input_file_name,'r') as f:
-        msg_body = f.read()
-    m.send_mail_to_one_rcpt("jenixe@126.com",msg_subject,msg_body)
+def sum():
+    db = StockDb()
+    stock_list = db.get_trading_stock_list()
+    count = 0
+    print("StockID | 3日涨幅 | 5日涨幅 | 7日涨幅 | 3日换手 | 5日换手 | 7日换手")  
+    for s in stock_list:
+        count = count+1
+        if count==100:
+            break              
+        pchg_3 = round(db.get_sum_n_pchg(s,3),2)
+        pchg_5 = round(db.get_sum_n_pchg(s,5),2)
+        pchg_7 = round(db.get_sum_n_pchg(s,7),2)
+        to_3 = round(db.get_sum_n_turnover(s,3),2)
+        to_5 = round(db.get_sum_n_turnover(s,5),2)
+        to_7 = round(db.get_sum_n_turnover(s,7),2)
+        print("%s | %s | %s | %s | %s | %s | %s"%(s,pchg_3,pchg_5,pchg_7,to_3,to_5,to_7))
+
 
 if __name__ == '__main__':       
     #monitor(file_name,60)
     #monitor_after_bid(file_name,60)
-    test()
+    sum()
     #send_sum_mail()

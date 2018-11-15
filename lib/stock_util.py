@@ -148,10 +148,10 @@ class StockUtil():
         aoi = round((cur_price-last_day_price)*100/last_day_price,2)
         aoi_open = round((open_price-last_day_price)*100/last_day_price,2)
         volume = round(float(info[8])/1000000,2)
-        rmb = round(float(info[9])/100000000,2)
+        rmb = round(float(info[9])/100000000,2)        
         db = StockDb()
-        last_turnover = db.get_last_turnover(stock_id)
-        last_pchg = db.get_last_pchg(stock_id)
+        last_turnover = db.get_turnover_by_daynum(stock_id,1)
+        last_pchg = db.get_pchg_by_daynum(stock_id,1)
         float_shares = round(db.get_float_shares_from_id(stock_id)/100000000,2)
         ret = "%s(%s) | %8s%% | %8s%% | %8s | %8s(万手) | %8s(亿) | %8s | %8s%% | %8s(亿)"%(stock_name,stock_id,aoi_open,aoi,info[3],volume,rmb,last_turnover,last_pchg,float_shares)
         if(aoi>9.7):
@@ -164,6 +164,7 @@ class StockUtil():
     
     def get_live_mon_items_bid(self,stock_id):
         info = self.get_live_status(stock_id).split(',')
+        self.logger.info(info)
         cur_price = float(info[11])
         last_day_price = float(info[2])
         #open_price = float(info[1])
