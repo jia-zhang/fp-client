@@ -31,19 +31,13 @@ class StockDb():
         return res
     
     def add_fp_result(self,stock_list,fp_type,fp_date):
-        sql_cmd = "insert into tb_fp_result values ('%s', '%s', '%s')"%(fp_date,fp_type,','.join(stock_list))
+        sql_cmd = "insert into tb_fp_result values ('%s', %s, '%s')"%(fp_date,fp_type,','.join(stock_list))
         self.update_db(sql_cmd)
     
     def get_fp_result(self,fp_date,fp_type):
-        sql_cmd = "select stock_list from tb_fp_result where date='%s' and type='%s'"%(fp_date,fp_type)
+        sql_cmd = "select stock_list from tb_fp_result where date='%s' and type=%s"%(fp_date,fp_type)
         ret = self.query_db(sql_cmd)
         return ret[0][0]  
-
-    def get_all_fp_result(self,fp_date):
-        sql_cmd = "select stock_list from tb_fp_result where date='%s'"%(fp_date)
-        ret = self.query_db(sql_cmd)
-        return DataFrame(ret)[0].values.tolist()
-        #return (','.join(DataFrame(ret)[0].values.tolist())).split(',')
     
     '''
     def get_last_dump_date(self):
@@ -178,10 +172,10 @@ class StockDb():
 if __name__ == '__main__':
     #print("hello")
     t = StockDb()
-    #fp_list = t.get_all_fp_result('2018-11-14')
-    #print(fp_list)
+    fp_list = t.get_all_fp_result('2018-11-14')
+    print(fp_list)
     #print(t.get_turnover_by_daynum('sz000002',1))
-    print(t.get_pchg_by_daynum('sz000002',1))
+    #print(t.get_pchg_by_daynum('sz000002',1))
     #print(t.get_turnover_by_daynum('sz00002',0))
     #print(t.get_sum_n_lift('sh600530',7))
     #print(t.get_in_mkt_date_from_id('sz000002'))
@@ -195,6 +189,8 @@ if __name__ == '__main__':
     #t.add_pre_dump_daily('2018-11-12')
     #print(t.get_last_turnover('sz000002'))
         #time.sleep(1)
+    #stock_list = t.get_fp_result('2018-11-09',0).split(',')
+    #print(stock_list)
     '''
     stock_list = t.get_fp_result('2018-11-09','龙头').split(',')
     for s in stock_list:

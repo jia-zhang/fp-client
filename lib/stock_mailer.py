@@ -46,8 +46,6 @@ class StockMailer():
             self.logger.info("Sending mail to %s"%(self.rcpt_list))                
             self.send_mail_from_qq(self.rcpt_list,msg_subject,msg_body)
     
- 
-    
     def send_mail_from_qq(self,rcpt,msg_subject,msg_body):
         ret=True
         try:
@@ -60,39 +58,6 @@ class StockMailer():
             server.sendmail(self.my_sender,[rcpt,],msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
             server.quit()# 关闭连接
         except Exception:# 如果 try 中的语句没有执行，则会执行下面的 ret=False
-            #print("aaabbb")
-            ret=False
-        return ret
-
-    def send_mail_from_gmail(self,rcpt,msg_subject,msg_body):
-        ret=True
-        try:
-            msg=MIMEText(msg_body,'plain','utf-8')
-            msg['From']=formataddr(["jiazzz","jenixg@gmail.com"])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
-            msg['To']=formataddr(["whoareyou",rcpt])              # 括号里的对应收件人邮箱昵称、收件人邮箱账号
-            msg['Subject']="%s-%s"%(msg_subject,self.date)                # 邮件的主题，也可以说是标题
-            server=smtplib.SMTP_SSL("smtp.gmail.com", 465)  # 发件人邮箱中的SMTP服务器，端口是465
-            server.login("jenixg@gmail.com", "trend#11")  # 括号中对应的是发件人邮箱账号、邮箱密码
-            server.sendmail(self.my_sender,[rcpt,],msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
-            server.quit()# 关闭连接
-        except Exception:# 如果 try 中的语句没有执行，则会执行下面的 ret=False
-            #print("aaabbb")
-            ret=False
-        return ret
-    
-    def send_mail_from_126(self,rcpt,msg_subject,msg_body):
-        ret=True
-        try:
-            msg=MIMEText(msg_body,'plain','utf-8')
-            msg['From']=formataddr(["jiazzz","jenixg@gmail.com"])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
-            msg['To']=formataddr(["whoareyou",rcpt])              # 括号里的对应收件人邮箱昵称、收件人邮箱账号
-            msg['Subject']="%s-%s"%(msg_subject,self.date)                # 邮件的主题，也可以说是标题
-            server=smtplib.SMTP_SSL("smtp.126.com", 465)  # 发件人邮箱中的SMTP服务器，端口是465
-            server.login("jenixe@126.com", "trend1980")  # 括号中对应的是发件人邮箱账号、邮箱密码
-            server.sendmail(self.my_sender,[rcpt,],msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
-            server.quit()# 关闭连接
-        except Exception:# 如果 try 中的语句没有执行，则会执行下面的 ret=False
-            #print("aaabbb")
             ret=False
         return ret
 

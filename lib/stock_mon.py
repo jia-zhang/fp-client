@@ -11,7 +11,6 @@ class StockMon():
     def __init__(self):
         self.logger = Logger("StockMon")
         self.util = StockUtil()
-        pass
 
     def get_xueqiu_info(self,url):
         cookie_url = "https://xueqiu.com"
@@ -22,15 +21,23 @@ class StockMon():
         #self.logger.info(r1.text)
         stock_list = eval(r1.text)['stocks']
         return DataFrame(stock_list)
+    
+    def get_market_status_from_xueqiu(self,direction,page_number,page_size):
+        #direction = asc 跌幅榜， direction = desc 涨幅榜
+        url = "https://xueqiu.com/stock/cata/stocklist.json?page=%s&size=%s&order=%s&orderby=percent&type=11%%2C12&_=1541985912951"%(page_number,page_size,direction)
+        #self.logger.info(url)
+        return self.get_xueqiu_info(url)
 
-
-    def get_market_status(self,direction,page_number,page_size):
+    def get_market_status(self,direction,page_number,page_size,use_proxy=0):
+        #direction=0 means top n, direction=1 means bottom n
         proxies = {'http': 'http://18.197.117.119:8080', 'https': 'http://18.197.117.119:8080'}
         detail_url = "http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?\
         page=%s&num=%s&sort=changepercent&asc=%s&node=hs_a&symbol=&_s_r_a=init"%(page_number,page_size,direction)
-        #resp = requests.get(detail_url,proxies=proxies)
-        resp = requests.get(detail_url)
-        #print(resp.text)
+        if use_proxy==1:
+            resp = requests.get(detail_url,proxies=proxies)
+        else:
+            resp = requests.get(detail_url)
+        #self.logger.info(resp.text)
         if resp.text=='null':
             return ''
         elif '?xml' in resp.text:
@@ -42,22 +49,16 @@ class StockMon():
         replace('volume','"volume"').replace('amount','"amount"').replace('ticktime','"ticktime"').replace('per:','"per":').\
         replace('pb','"pb"').replace('mktcap','"mktcap"').replace('nmc','"nmc"').replace('turnoverratio','"turnoverratio"'))
     
-    def get_market_limit_up_number(self):
-        '''
-        获取市场涨停个数
-        '''
-        ret = 0
+    def get_zt_number(self):
+        #Get zt number
         market_status = self.get_market_status(0,1,100)
         for i in range(100):
             if float(market_status[i]['changepercent'])<9.7:
                 self.logger.info("涨停个数：%s"%i)
                 return i       
 
-    def get_market_limit_down_number(self):
-        '''
-        获取市场跌停个数
-        '''
-        ret = 0
+    def get_dt_number(self):
+        #Get dt number
         market_status = self.get_market_status(1,1,100)
         for i in range(100):
             if float(market_status[i]['changepercent'])>-9.7:
@@ -111,11 +112,11 @@ class StockMon():
     def get_top_and_bottom(self,n):
         status = self.get_market_status(0,1,n)
         df = DataFrame(status)
-        df1 = df[['symbo','name','changepercent','trade','open','high','low','volume','turnoverratio','mktcap']]
+        df1 = df[['symbo','name','changepercent','trade','open','high','low','volume','turnoverratio']]
         print(df1)
         status = self.get_market_status(1,1,n)
         df = DataFrame(status)
-        df1 = df[['symbo','name','changepercent','trade','open','high','low','volume','turnoverratio','mktcap']]
+        df1 = df[['symbo','name','changepercent','trade','open','high','low','volume','turnoverratio']]
         print(df1)
     
     def get_top_n_df(self,direction,n):
@@ -166,25 +167,6 @@ class StockMon():
         with open('output.html','w',encoding="gb2312") as f:
             f.write(df1.to_html())
 
-    def sum(self,stock_list):
-        db = StockDb()    
-        self.logger.info("StockID | StockName | 3日涨幅 | 5日涨幅 | 7日涨幅 | 3日换手 | 5日换手 | 7日换手")  
-        for s in stock_list:    
-            try: 
-                stock_name = db.get_stock_name_from_id(s)   
-                pchg_3 = round(db.get_sum_n_pchg(s,3),2)
-                pchg_5 = round(db.get_sum_n_pchg(s,5),2)
-                pchg_7 = round(db.get_sum_n_pchg(s,7),2)
-                to_3 = round(db.get_sum_n_turnover(s,3),2)
-                to_5 = round(db.get_sum_n_turnover(s,5),2)
-                to_7 = round(db.get_sum_n_turnover(s,7),2)
-                self.logger.info("%s | %s | %s | %s | %s | %s | %s | %s"%(s,stock_name,pchg_3,pchg_5,pchg_7,to_3,to_5,to_7))
-            except:
-                self.logger.info("Exception on stock %s"%(s))
-
-    
-
-
     def check_fp_list(self):
         db = StockDb()
         fp_types = ['龙头','潜力','屌丝潜力']        
@@ -223,24 +205,23 @@ class StockMon():
 
 if __name__ == '__main__':
     t = StockMon()
+    df = t.get_market_status_from_xueqiu('asc',1,30)
+    df.style.set_properties(**{'background-color': 'black',
+                           'color': 'lawngreen',
+                           'border-color': 'white'})
+    print(df)
     #stock_list = t.get_top_n_list(100)
     #print(stock_list)
-    t.sum_top_n_list(0,100)
+    #t.sum_top_n_list(0,100)
     #t.get_top_and_bottom(50)
     #df = DataFrame(t.get_market_status(0,1,50))
-    #print(df)
+    #df1 = df.iloc[:,10:20]
+    #df1 = df.iloc[:,0:10]
+    #print(df1)
     #t.get_bid_sample_list()
     #t.mon_bid()
 
-    '''
-    url = 'https://xueqiu.com/stock/cata/stocklist.json?page=1&size=100&order=desc&orderby=percent&type=11%2C12&_=1541985912951'
-    url2 = 'https://xueqiu.com/stock/cata/stocklist.json?page=1&size=30&order=desc&orderby=percent&type=11%2C12&_=1541985912951'
-    for i in range(1,2):
-        url = "https://xueqiu.com/stock/cata/stocklist.json?page=%s&size=100&order=desc&orderby=percent&type=11%%2C12&_=1541985912951"%(i)
-        print(DataFrame(t.get_xueqiu_info(url)))
-        url2 = "https://xueqiu.com/stock/cata/stocklist.json?page=%s&size=100&order=asc&orderby=percent&type=11%%2C12&_=1541985912951"%(i)
-        print(DataFrame(t.get_xueqiu_info(url2)))
-    
+    '''   
     f = open('t1.csv','w')
     for i in range(1,40):
         status = t.get_market_status(0,i,100)
