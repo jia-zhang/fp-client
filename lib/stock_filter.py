@@ -87,7 +87,8 @@ class StockFilter():
         for s in stock_list:
             sum_lift = self.db.get_sum_n_lift(s,day_num)
             if sum_lift<lift_criteria:
-                self.logger.info("Remove stock %s"%(s))
+                #self.logger.info("Remove stock %s"%(s))
+                pass
             else:
                 ret.append(s)
         self.logger.info("Found %s stocks after filtering big lift within %s days"%(len(ret),day_num))
@@ -102,9 +103,23 @@ class StockFilter():
             cur_price = float(self.util.get_live_status(s).split(',')[3])
             mkt_share = float_shares*cur_price
             if mkt_share<mkt_share_limit:
-                self.logger.info("Add stock %s which mkt share<%s"%(s,mkt_share_limit))
+                #self.logger.info("Add stock %s which mkt share<%s"%(s,mkt_share_limit))
                 ret.append(s)
         return ret
+
+    def get_float_shares_below_limit(self,stock_list,float_shares_limit=10):
+        ret = []
+        match_list = self.db.get_stock_list_by_float_shares(float_shares_limit)
+        return list(set(stock_list).intersection(set(match_list)))
+        '''
+        self.logger.info("Get float shares which is below %sE..."%(float_shares_limit))
+        for s in stock_list:
+            float_shares = round(self.db.get_float_shares_from_id(s)/100000000,2)
+            if float_shares<float_shares_limit:
+                #self.logger.info("Add stock %s which float shares<%s"%(s,float_shares_limit))
+                ret.append(s)
+        return ret
+        '''
     
     
     def get_increase_rate_increase(self,stock_list,day_num,increase_criteria=1):
@@ -114,7 +129,7 @@ class StockFilter():
             try:            
                 increase_list = self.db.get_last_n_pchg(s,day_num)           
                 if increase_list!=[] and self.util.is_list_sorted(increase_list)=='desc':
-                    self.logger.info("Function get_increase_rate_increase, add stock %s"%(s))
+                    #self.logger.info("Function get_increase_rate_increase, add stock %s"%(s))
                     ret.append(s)
             except:
                 self.logger.info("Exception on stock:%s"%(s))

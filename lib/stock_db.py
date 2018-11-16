@@ -32,6 +32,7 @@ class StockDb():
     
     def add_fp_result(self,stock_list,fp_type,fp_date):
         sql_cmd = "insert into tb_fp_result values ('%s', %s, '%s')"%(fp_date,fp_type,','.join(stock_list))
+        print(sql_cmd)
         self.update_db(sql_cmd)
     
     def get_fp_result(self,fp_date,fp_type):
@@ -45,6 +46,11 @@ class StockDb():
         ret = self.query_db(sql_cmd)
         return ret[0][0]
     '''
+
+    def get_stock_list_by_float_shares(self,float_shares_limit):
+        sql_cmd = "select stock_id from tb_basic_info where float_shares<%s"%(float_shares_limit*100000000)
+        ret = self.query_db(sql_cmd)
+        return DataFrame(ret)[0].values.tolist()
 
     def get_last_trading_date(self):
         sql_cmd = "select value from tb_configuration where name='last_trading_date'"
@@ -155,25 +161,13 @@ class StockDb():
         float_share_list = df[1].values.tolist()
         ret_dict = dict(zip(stock_id_list,float_share_list))
         return ret_dict
-
-    def tmp(self):
-        #float_shares = self.get_float_shares_from_id(s)
-        info_list = self.get_daily_info()
-        for info in info_list:
-            stock_id = info[1]
-            float_shares = self.get_float_shares_from_id(stock_id)
-            volume = info[6]
-            date = info[0]
-            turn_over = round(volume*100/float_shares,2)
-            sql_cmd = "update tb_daily_info set turnover=%s where date='%s' and stock_id='%s'"%(turn_over,date,stock_id)
-            self.update_db(sql_cmd)
-            print("%s:%s:%s:%s"%(date,stock_id,volume,turn_over))
     
 if __name__ == '__main__':
     #print("hello")
     t = StockDb()
-    fp_list = t.get_all_fp_result('2018-11-14')
-    print(fp_list)
+    #fp_list = t.get_all_fp_result('2018-11-14')
+    print(t.get_stock_list_by_float_shares(2))
+    #print(fp_list)
     #print(t.get_turnover_by_daynum('sz000002',1))
     #print(t.get_pchg_by_daynum('sz000002',1))
     #print(t.get_turnover_by_daynum('sz00002',0))

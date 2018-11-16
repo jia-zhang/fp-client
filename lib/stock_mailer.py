@@ -30,9 +30,7 @@ class StockMailer():
         self.add_msg_body('=======================\n')
 
     def send_fp_mail(self,real_send=0):
-        msg_subject = "复盘结果"        
-        print(type(self.msg_body_list))
-        print(self.msg_body_list)  
+        msg_subject = "复盘结果"         
         msg_body = "\n".join(self.msg_body_list)
         self.logger.info(msg_body)
         if real_send==1:
