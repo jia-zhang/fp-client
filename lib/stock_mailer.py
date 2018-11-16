@@ -25,13 +25,12 @@ class StockMailer():
     
     def compose_msg_body(self,stock_list):
         self.add_msg_body('=======================')
-        stock_status = "\n".join(self.util.get_summary_status_after_close(stock_list))
+        stock_status = "\n".join(self.util.get_summary_status(stock_list))
         self.msg_body_list.append(stock_status)
         self.add_msg_body('=======================\n')
 
     def send_fp_mail(self,real_send=0):
-        msg_subject = "复盘结果"
-        #stock_status = self.util.get_summary_status_after_close(stock_list)  
+        msg_subject = "复盘结果"        
         print(type(self.msg_body_list))
         print(self.msg_body_list)  
         msg_body = "\n".join(self.msg_body_list)

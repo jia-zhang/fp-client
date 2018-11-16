@@ -109,7 +109,7 @@ class StockMon():
                 self.logger.info(self.util.get_live_mon_items(s))
             time.sleep(refresh_interval)  
 
-    def get_top_and_bottom(self,n):
+    def check_top_and_bottom(self,n):
         status = self.get_market_status(0,1,n)
         df = DataFrame(status)
         df1 = df[['symbo','name','changepercent','trade','open','high','low','volume','turnoverratio']]
@@ -165,55 +165,44 @@ class StockMon():
         '''
         df1 = pd.read_csv('out.csv',index_col=0)
         with open('output.html','w',encoding="gb2312") as f:
-            f.write(df1.to_html())
+            f.write(df1.to_html())  
 
-    def check_fp_list(self):
-        db = StockDb()
-        fp_types = ['龙头','潜力','屌丝潜力']        
-        date = db.get_last_trading_date()
-        for t in fp_types:
-            s_list = db.get_fp_result(date,t).split(',')
-            self.check_stock_list(s_list)     
-
-    def get_bid_sample_list(self,top_n=50): #run on 9:20, get stock_list which is in top n
+    def get_bid_sample_list(self,top_n=100): #run on 9:20, get stock_list which is in top n
         url = 'https://xueqiu.com/stock/cata/stocklist.json?page=1&size=%s&order=desc&orderby=percent&type=11%%2C12&_=1541985912951'%(top_n)
         df = self.get_xueqiu_info(url)
-        df1 =  df[['code','name','current','percent','volume']]  
-        print(df1)  
-        s_list = df1['code'].values.tolist()
+        df1 =  df[['symbol','name','current','percent','volume']]  
+        #print(df1)  
+        s_list = df1['symbol'].values.tolist()
         #print(s_list)
         return s_list
     
     def mon_bid(self):
         sample_list = self.get_bid_sample_list()
+        f = open('bid.txt','w')
         while True:
-            time.sleep(5) #every 20 seconds, check diff(new_list,sample_list)...
+            time.sleep(20) #every 20 seconds, check diff(new_list,sample_list)...
             new_list = self.get_bid_sample_list()
             check_list = []
             for s in new_list:
                 if s not in sample_list:
                     check_list.append(s)
-            for s in check_list:
-                if s.startswith('60'):
-                    stock_id = "sh%s"%(s)
-                else:
-                    stock_id = "sz%s"%(s)    
-                self.logger.info("================Monitor==============")
-                self.logger.info("股票名称（股票ID）| 涨幅 | 竞买价 | 竞买量（万手）") 
-                status = self.util.get_live_mon_items_bid(stock_id)
+            for s in check_list:                  
+                self.logger.info("================Please check the following==============")                
+                status = self.util.get_live_status(s)
+                self.logger.info(s)
                 self.logger.info(status)
+                f.write(s)
+        f.close()
 
 if __name__ == '__main__':
     t = StockMon()
-    df = t.get_market_status_from_xueqiu('asc',1,30)
-    df.style.set_properties(**{'background-color': 'black',
-                           'color': 'lawngreen',
-                           'border-color': 'white'})
-    print(df)
+    t.mon_bid()
+    #df = t.get_bid_sample_list()
+    
     #stock_list = t.get_top_n_list(100)
     #print(stock_list)
     #t.sum_top_n_list(0,100)
-    #t.get_top_and_bottom(50)
+    #check(50)
     #df = DataFrame(t.get_market_status(0,1,50))
     #df1 = df.iloc[:,10:20]
     #df1 = df.iloc[:,0:10]

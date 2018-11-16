@@ -105,9 +105,15 @@ class StockDump():
 if __name__ == '__main__':
     t = StockDump()
     #t.get_last_trading_date_live()
-    #t.pre_dump()
-    #t.check_diff()
-    t.update_db()
+    confirm = input("Do pre dump?")
+    if confirm=='y':
+        t.pre_dump()
+    confirm = input("Check diff?")
+    if confirm=='y':
+        t.check_diff()
+    confirm = input("Continue to add data to database?")
+    if confirm=='y':
+        t.update_db()
     
    
     

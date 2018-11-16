@@ -110,28 +110,24 @@ class StockUtil():
     
     
 
-    def get_summary_status_after_close(self,stock_list):
+    def get_summary_status(self,stock_list):
         ret = []
-        title = "  股票名称（股票ID）       | 开盘涨幅  | 当前涨幅  | 当前价格 |    成交量      |   成交金额   | 昨日换手 | 昨日涨幅  |    流通股"
+        title = "  股票名称（股票ID）       | 开盘涨幅  | 当前涨幅  | 当前价格 |    成交量      |   成交金额   |    流通股"
         ret.append(title)
         for s in stock_list:
             status = self.get_live_mon_items(s)            
             ret.append(status)
         return ret
     
-    def get_live_status_list(self,stock_list):
-        s_list_str = ','.join(stock_list)
+    def get_live_status(self,stock_id):
         ret = ""
         url = "http://hq.sinajs.cn/list=%s"%(s_list_str)
         r = requests.get(url)
         if r.status_code != 200:
-            return ret
-        #re_info = re.compile(r'="(.*)"')
-        #ret = re_info.findall(r.text)[0]
+            return ret        
         ret = r.text
         return ret
-    
-    
+       
 
     def get_live_mon_items(self,stock_id):
         info = self.get_live_status(stock_id).split(',')
@@ -149,11 +145,9 @@ class StockUtil():
         aoi_open = round((open_price-last_day_price)*100/last_day_price,2)
         volume = round(float(info[8])/1000000,2)
         rmb = round(float(info[9])/100000000,2)        
-        db = StockDb()
-        last_turnover = db.get_turnover_by_daynum(stock_id,1)
-        last_pchg = db.get_pchg_by_daynum(stock_id,1)
+        db = StockDb()        
         float_shares = round(db.get_float_shares_from_id(stock_id)/100000000,2)
-        ret = "%s(%s) | %8s%% | %8s%% | %8s | %8s(万手) | %8s(亿) | %8s | %8s%% | %8s(亿)"%(stock_name,stock_id,aoi_open,aoi,info[3],volume,rmb,last_turnover,last_pchg,float_shares)
+        ret = "%s(%s) | %8s%% | %8s%% | %8s | %8s(万手) | %8s(亿) | %8s(亿)"%(stock_name,stock_id,aoi_open,aoi,info[3],volume,rmb,float_shares)
         if(aoi>9.7):
             ret = "└(^o^)┘ %s"%ret
         elif (aoi>aoi_open and aoi>3):
