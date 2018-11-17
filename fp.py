@@ -68,7 +68,7 @@ def get_potential_2(s_list):
     s_list = f.get_increase_rate_increase(s_list,3)
     s_list = f.get_delta_within_days(s_list,7,0)
     s_list = f.get_delta_within_days(s_list,5,5)
-    filter_list = f.get_delta_within_days(s_list,3,10)
+    filter_list = f.get_delta_within_days(s_list,3,20)
     s_list = list(set(s_list)-set(filter_list))
     s_list = f.filter_big_lift_within_days(s_list,7,0)
     return s_list
@@ -99,9 +99,10 @@ def fp():
 if __name__ == '__main__':    
     s_list = pre_analyze()
     print('=====================\n')
-    l1 = get_potential(s_list)
+    #l1 = get_potential(s_list)
     print('======================\n')
     l2 = get_potential_2(s_list)
+    print(l2)
     #fp()
     #time.sleep(30)
     #send_fp_mail()

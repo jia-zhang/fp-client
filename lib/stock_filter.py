@@ -62,10 +62,10 @@ class StockFilter():
             #self.logger.info("%s:%s"%(s,delta))
             if(delta>delta_criteria and s not in ret):
                 ret.append(s)
-        filtered_list=list(set(stock_list)-set(ret))
-        self.logger.info("Filtered %s stocks"%(len(filtered_list)))
-        self.logger.info(filtered_list)
-        self.logger.info("======End, found %s stocks======"%(len(ret)))        
+        #filtered_list=list(set(stock_list)-set(ret))
+        #self.logger.info("Filtered %s stocks"%(len(filtered_list)))
+        #self.logger.info(filtered_list)
+        self.logger.info("======End, found %s stocks after calling get_delta_within_days======"%(len(ret)))        
         return ret
     
     def get_big_increase_within_days(self,stock_list,day_num,increase_criteria=9):
