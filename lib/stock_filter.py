@@ -1,6 +1,7 @@
 import requests
 import re
 import time
+import datetime
 import os
 import json
 import pdb
@@ -18,21 +19,22 @@ class StockFilter():
     def check_if_time_available(self):
         pass
     
-    def get_top_increase(self,stock_list,n,day_num,remove_new_stock):
+    def get_top_increase(self,stock_list,n,day_num):
         d = {}
         for s in stock_list:
             d[s] = self.util.get_delta(s,day_num)
-        #print(d)
         sorted_list = sorted(d.items(), key=lambda d:d[1],reverse=True) 
-        #print(sorted_list)
         ret = []
         for i in range(1000):
             stock_id = sorted_list[i][0]
-            if self.util.get_stock_trading_dates(stock_id)>30:
-                ret.append(stock_id)
+            ret.append(stock_id)
             if len(ret)==n:
                 break
         return ret
+    
+    def filter_new_stocks(self,stock_list):
+        new_stocks = self.db.get_new_stocks()
+        return list(set(stock_list)-set(new_stocks))
     
     def get_volume_within_days(self,stock_list,day_num,volume_critiria):  
         '''
@@ -53,28 +55,38 @@ class StockFilter():
         过滤stock_list，返回delta_day内涨幅>delta_critira的股票列表
         例如，get_delta_within_days(stock_list,3,20)表示拿到3天内涨幅>20%的股票列表
         '''
-        self.logger.info("Start, get delta>%s stocks..."%(delta_criteria))
-        ret=[]
+        self.logger.info("======Start, get delta>%s stocks within %s days...======"%(delta_criteria,day_num))
+        ret=[]        
         for s in stock_list:
             delta = self.db.get_sum_n_pchg(s,day_num)
             #self.logger.info("%s:%s"%(s,delta))
             if(delta>delta_criteria and s not in ret):
                 ret.append(s)
-        self.logger.info("End, found %s stocks"%(len(ret)))
-        self.logger.info("============================\n\n")
+        filtered_list=list(set(stock_list)-set(ret))
+        self.logger.info("Filtered %s stocks"%(len(filtered_list)))
+        self.logger.info(filtered_list)
+        self.logger.info("======End, found %s stocks======"%(len(ret)))        
         return ret
     
-    def get_big_increase_within_days(self,stock_list,day_num,increase_criteria):
-        '''
-        Done
-        '''
-        self.logger.info("Filter big increase within %s days"%(day_num))
+    def get_big_increase_within_days(self,stock_list,day_num,increase_criteria=9):
+        self.logger.info("======Start, Get big increase within %s days======"%(day_num))
         day_list = self.db.get_last_n_dates(day_num)
-        #print(day_list)
         sql_cmd = "select distinct stock_id from tb_daily_info where pchg>%s and date>='%s' and pchg!=''"%(increase_criteria,day_list[-1]) 
-        #print(sql_cmd)
         ret = self.db.query_db(sql_cmd)       
-        return DataFrame(ret)[0].values.tolist()
+        match_list = DataFrame(ret)[0].values.tolist()
+        ret = list(set(stock_list).intersection(set(match_list)))
+        self.logger.info("======End, found %s stocks after calling get_big_increase_within_days======"%(len(ret)))
+        return ret
+    
+    def get_big_turnover_within_days(self,stock_list,day_num,turnover_criteria=5):
+        self.logger.info("======Start, get big turnover within %s days======"%(day_num))
+        day_list = self.db.get_last_n_dates(day_num)
+        sql_cmd = "select distinct stock_id from tb_daily_info where turnover>%s and date>='%s' and turnover!=''"%(turnover_criteria,day_list[-1]) 
+        ret = self.db.query_db(sql_cmd)       
+        match_list = DataFrame(ret)[0].values.tolist()
+        ret = list(set(stock_list).intersection(set(match_list)))
+        self.logger.info("======Start, found %s stocks after calling get_big_turnover_within_days======"%(len(ret)))
+        return ret
     
     def filter_big_lift_within_days(self,stock_list,day_num,lift_criteria):
         '''
@@ -82,16 +94,15 @@ class StockFilter():
         返回一个stock列表，去掉了所有n日内有大阴线形态2的股票。
         '''
         ret = []
-        self.logger.info("Filter big lift within %s days"%(day_num))
-        #print(stock_list)
+        self.logger.info("======Start, filter big lift within %s days======"%(day_num))
         for s in stock_list:
             sum_lift = self.db.get_sum_n_lift(s,day_num)
-            if sum_lift<lift_criteria:
-                #self.logger.info("Remove stock %s"%(s))
-                pass
-            else:
+            if sum_lift>lift_criteria:
                 ret.append(s)
-        self.logger.info("Found %s stocks after filtering big lift within %s days"%(len(ret),day_num))
+        filtered_list=list(set(stock_list)-set(ret))
+        self.logger.info("Filtered %s stocks"%(len(filtered_list)))
+        self.logger.info(filtered_list)
+        self.logger.info("======End, found %s stocks after filtering big lift within %s days======"%(len(ret),day_num))
         return ret    
 
     def get_mkt_share_below_limit(self,stock_list,mkt_share_limit=100):
@@ -110,20 +121,11 @@ class StockFilter():
     def get_float_shares_below_limit(self,stock_list,float_shares_limit=10):
         ret = []
         match_list = self.db.get_stock_list_by_float_shares(float_shares_limit)
-        return list(set(stock_list).intersection(set(match_list)))
-        '''
-        self.logger.info("Get float shares which is below %sE..."%(float_shares_limit))
-        for s in stock_list:
-            float_shares = round(self.db.get_float_shares_from_id(s)/100000000,2)
-            if float_shares<float_shares_limit:
-                #self.logger.info("Add stock %s which float shares<%s"%(s,float_shares_limit))
-                ret.append(s)
+        ret = list(set(stock_list).intersection(set(match_list)))
         return ret
-        '''
-    
     
     def get_increase_rate_increase(self,stock_list,day_num,increase_criteria=1):
-        self.logger.info("Get increase rate increase within %s days"%(day_num))
+        self.logger.info("======Start, get increase rate increase within %s days======"%(day_num))
         ret = []        
         for s in stock_list: 
             try:            
@@ -133,7 +135,7 @@ class StockFilter():
                     ret.append(s)
             except:
                 self.logger.info("Exception on stock:%s"%(s))
-        self.logger.info("Found %s stocks after filtering get_increase_rate_increase within %s days"%(len(ret),day_num))
+        self.logger.info("======End, Found %s stocks after filtering get_increase_rate_increase within %s days======"%(len(ret),day_num))
         return ret
     
     def get_turnover_increase(self,stock_list,day_num,increase_criteria=1):
@@ -170,9 +172,6 @@ class StockFilter():
 
 if __name__ == '__main__':
     t = StockFilter()
-    s_list = t.db.get_trading_stock_list()
-    
-    s_list = t.get_big_increase_within_days(s_list,5,9)
-    print(s_list)
+    print(t.filter_new_stocks([]))
     
     

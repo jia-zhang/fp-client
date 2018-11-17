@@ -1,7 +1,6 @@
 import sys
 sys.path.append("./lib")
 sys.path.append(".")
-from stock_util import StockUtil
 from stock_mon import StockMon
 from stock_db import StockDb
 import time
