@@ -129,7 +129,7 @@ class StockDb():
     
     def get_last_n_lift(self,stock_id,n):
         sql_cmd = "select lift from (select *,((close-high)*100/close+(close-open)*100/open)/2 as lift \
-        from tb_daily_info where stock_id='%s') order by date desc limit %s"%(stock_id,n)
+        from tb_daily_info where stock_id='%s' order by date desc limit %s)"%(stock_id,n)
         print(sql_cmd)
         ret = self.query_db(sql_cmd)
         return ret        
@@ -146,7 +146,7 @@ class StockDb():
     
     def get_sum_n_lift(self,stock_id,n):
         sql_cmd = "select sum(lift) from (select *,((close-high)*100/close+(close-open)*100/open)/2 as lift \
-        from tb_daily_info where stock_id='%s') order by date desc limit %s"%(stock_id,n)
+        from tb_daily_info where stock_id='%s' order by date desc limit %s)"%(stock_id,n)
         #print(sql_cmd)
         ret = self.query_db(sql_cmd)
         return ret[0][0]

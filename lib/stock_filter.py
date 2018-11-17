@@ -68,6 +68,9 @@ class StockFilter():
         self.logger.info("======End, found %s stocks after calling get_delta_within_days======"%(len(ret)))        
         return ret
     
+    def get_yd():
+        pass
+    
     def get_big_increase_within_days(self,stock_list,day_num,increase_criteria=9):
         self.logger.info("======Start, Get big increase within %s days======"%(day_num))
         day_list = self.db.get_last_n_dates(day_num)
@@ -86,6 +89,23 @@ class StockFilter():
         match_list = DataFrame(ret)[0].values.tolist()
         ret = list(set(stock_list).intersection(set(match_list)))
         self.logger.info("======Start, found %s stocks after calling get_big_turnover_within_days======"%(len(ret)))
+        return ret
+
+    def get_big_lift_within_days(self,stock_list,day_num,lift_criteria):
+        pass
+
+    def filter_low_score_today(self,stock_list):
+        ret = []
+        last_trading_date = self.db.get_last_trading_date()
+        sql_cmd = "select stock_id from (select date,stock_id,turnover,pchg,t1,t2,t3,pchg+t1+t2+t3 as score \
+        from (select *,(close-high)*100/close as t1,(close-open)*100/open as t2, (close-low)*100/low as t3, \
+        (high-low)*100/low as t4 from tb_daily_info where date='%s')) where score<0"%(last_trading_date)
+        ret = self.db.query_db(sql_cmd)
+        s_list = DataFrame(ret)[0].values.tolist()
+        print(s_list)
+        for s in stock_list:
+            if s not in s_list:
+                ret.append(s)
         return ret
     
     def filter_big_lift_within_days(self,stock_list,day_num,lift_criteria):

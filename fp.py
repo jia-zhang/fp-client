@@ -68,9 +68,9 @@ def get_potential_2(s_list):
     s_list = f.get_increase_rate_increase(s_list,3)
     s_list = f.get_delta_within_days(s_list,7,0)
     s_list = f.get_delta_within_days(s_list,5,5)
-    filter_list = f.get_delta_within_days(s_list,3,20)
-    s_list = list(set(s_list)-set(filter_list))
-    s_list = f.filter_big_lift_within_days(s_list,7,0)
+    #filter_list = f.get_delta_within_days(s_list,3,10)
+    #s_list = list(set(s_list)-set(filter_list))
+    s_list = f.filter_low_score_today(s_list)
     return s_list
 
 def compose_and_send(fp_result):
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     #l1 = get_potential(s_list)
     print('======================\n')
     l2 = get_potential_2(s_list)
-    print(l2)
+    #print(l2)
     #fp()
     #time.sleep(30)
     #send_fp_mail()
