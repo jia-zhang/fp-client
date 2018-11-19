@@ -33,14 +33,10 @@ class StockMailer():
     def send_fp_mail(self,real_send=0):
         if real_send==0:
             return
-            '''
-            for rcpt in self.rcpt_list:
-                self.logger.info("Sending mail to %s"%(rcpt))                
-                self.send_mail_from_qq(rcpt,msg_subject,msg_body)
-                time.sleep(10)
-            '''
-        self.logger.info("Sending mail to %s"%(self.rcpt_list))                
-        self.send_mail_from_qq(self.rcpt_list,self.msg_subject,self.msg_body)
+        for rcpt in self.rcpt_list.split(','):
+            self.logger.info("Sending mail to %s"%(rcpt))                
+            self.send_mail_from_qq(rcpt,self.msg_subject,self.msg_body)
+            time.sleep(10)
     
     def send_mail_from_qq(self,rcpt,msg_subject,msg_body):
         ret=True

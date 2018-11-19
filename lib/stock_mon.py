@@ -95,10 +95,8 @@ class StockMon():
 
     def check_stock_list(self,stock_list):      
         self.logger.info("================Monitor==============")
-        self.logger.info("  股票名称（股票ID）       | 开盘涨幅  | 当前涨幅  | 当前价格 |    成交量      |   成交金额   | 昨日换手 | 昨日涨幅  |    流通股")            
-        for s in stock_list:
-            status = self.util.get_live_mon_items(s)  
-            self.logger.info(status)        
+        status = self.util.get_summary_status(stock_list)
+        self.logger.info(status)        
 
 
     def monitor_after_bid(self,stock_list,refresh_interval):

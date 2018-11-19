@@ -33,10 +33,12 @@ class StockDb():
         print(sql_cmd)
         self.update_db(sql_cmd)
     
-    def get_fp_result(self,fp_date,fp_type):
-        sql_cmd = "select stock_list from tb_fp_result where date='%s' and type=%s"%(fp_date,fp_type)
+    def get_fp_result(self):
+        fp_date = self.get_last_trading_date()
+        sql_cmd = "select stock_list from tb_fp_result where date='%s'"%(fp_date)
         ret = self.query_db(sql_cmd)
-        return ret[0][0]  
+        df = DataFrame(ret)
+        return df[0].values.tolist()
 
 
     #==============Configuration related functions===========
@@ -180,7 +182,7 @@ class StockDb():
 if __name__ == '__main__':
     #print("hello")
     t = StockDb()
-    print(t.get_new_stocks())
+    print(t.get_fp_result())
     #fp_list = t.get_all_fp_result('2018-11-14')
     #print(t.get_stock_list_by_float_shares(2))
     
