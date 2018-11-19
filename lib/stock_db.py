@@ -156,6 +156,19 @@ class StockDb():
         ret = self.query_db(sql_cmd)
         return ret[0][0]
     
+    def get_stock_score_list(self,stock_id,day_num=10):
+        sql_cmd = "select date,stock_id, score from (select date,stock_id,turnover,pchg,t1,t2,t3,pchg*3+t1+t2+t3 as score from \
+        (select *,(close-high)*100/close as t1,(close-open)*100/open as t2, (close-low)*100/low as t3, (high-low)*100/low as t4 \
+        from tb_daily_info where stock_id='%s' order by date desc limit %s))"%(stock_id,day_num)
+        ret = self.query_db(sql_cmd)
+        try:
+            df = DataFrame(ret)
+            ret = df[2].values.tolist()
+        except:
+            print("exception on stock %s"%(stock_id))
+        #print(df)
+        return ret
+    
     #==========Complex merged functions================
     def get_suspend_stock_list(self):
         all_stocks = self.get_stock_list()

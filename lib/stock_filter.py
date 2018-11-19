@@ -88,11 +88,21 @@ class StockFilter():
         ret = self.db.query_db(sql_cmd)       
         match_list = DataFrame(ret)[0].values.tolist()
         ret = list(set(stock_list).intersection(set(match_list)))
-        self.logger.info("======Start, found %s stocks after calling get_big_turnover_within_days======"%(len(ret)))
+        self.logger.info("======End, found %s stocks after calling get_big_turnover_within_days======"%(len(ret)))
         return ret
 
     def get_big_lift_within_days(self,stock_list,day_num,lift_criteria):
         pass
+
+    def get_high_score_list(self,stock_list,score_criteria=40):
+        self.logger.info("======Start, get high score list======")
+        ret = []
+        for s in stock_list:
+            score = self.util.get_weighted_score(s)
+            if score>score_criteria:
+                ret.append(s)
+        self.logger.info("======End, found %s stocks after calling get_high_score_list======"%(len(ret)))
+        return ret
 
     def filter_low_score_today(self,stock_list):
         ret = []

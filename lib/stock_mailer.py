@@ -13,33 +13,34 @@ class StockMailer():
         self.date = datetime.datetime.now().strftime('%Y/%m/%d')
         self.rcpt_list = "jenixe@126.com,286531599@qq.com,3797069@qq.com"
         self.util = StockUtil()
-        self.mail_server = '127.0.0.1'
-        self.mail_port = 25
         self.logger = Logger("StockMailer")
-        self.msg_body_list = []
-    
-    def add_msg_body(self,msg_str):
-        self.msg_body_list.append(msg_str)
+        self.msg_subject = "复盘结果" 
+        self.msg_body = ''
     
     def compose_msg_body(self,stock_list):
-        self.add_msg_body('=======================')
-        stock_status = "\n".join(self.util.get_summary_status(stock_list))
-        self.msg_body_list.append(stock_status)
-        self.add_msg_body('=======================\n')
+        ret = []
+        ret.append('=======================')
+        sum_status = self.util.get_summary_status(stock_list)
+        #print(sum_status)
+        stock_status = "\n".join(sum_status)
+        ret.append(stock_status)
+        ret.append('=======================\n')
+        msg_body = "\n".join(ret)
+        self.msg_body = msg_body
+        self.logger.info(msg_body)
+        return msg_body
 
     def send_fp_mail(self,real_send=0):
-        msg_subject = "复盘结果"         
-        msg_body = "\n".join(self.msg_body_list)
-        self.logger.info(msg_body)
-        if real_send==1:
+        if real_send==0:
+            return
             '''
             for rcpt in self.rcpt_list:
                 self.logger.info("Sending mail to %s"%(rcpt))                
                 self.send_mail_from_qq(rcpt,msg_subject,msg_body)
                 time.sleep(10)
             '''
-            self.logger.info("Sending mail to %s"%(self.rcpt_list))                
-            self.send_mail_from_qq(self.rcpt_list,msg_subject,msg_body)
+        self.logger.info("Sending mail to %s"%(self.rcpt_list))                
+        self.send_mail_from_qq(self.rcpt_list,self.msg_subject,self.msg_body)
     
     def send_mail_from_qq(self,rcpt,msg_subject,msg_body):
         ret=True
@@ -58,6 +59,7 @@ class StockMailer():
 
 if __name__ == '__main__':
     t = StockMailer()
-    t.send_mail_from_qq('jenixe@126.com','test','this is a test mail')
+    stock_list = ['sz002472', 'sh600695', 'sh600462', 'sz002026', 'sz002856', 'sz000609', 'sz300659', 'sz002058', 'sh603106', 'sh603569', 'sh600846', 'sz002798', 'sz000971', 'sh600630', 'sz300234', 'sz300543', 'sz002328', 'sz002164', 'sz002226', 'sz300606', 'sz300636', 'sz002837', 'sh603165', 'sh600624', 'sz002417', 'sh603305', 'sh600283', 'sh600784', 'sz002680', 'sz300541', 'sz300651', 'sh603738', 'sz300607', 'sh603648', 'sh600366', 'sh600165', 'sh600355', 'sh603180', 'sz002288', 'sz002709', 'sh600278', 'sh600621', 'sz002492']
+    t.compose_msg_body(stock_list)
 
 

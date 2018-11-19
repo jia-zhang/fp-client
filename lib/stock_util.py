@@ -78,16 +78,14 @@ class StockUtil():
         return self.get_stock_list_from_file(self.valid_stock_file)
 
     
-    def check_file_and_read(self,file_name):
-        if not os.path.exists(file_name):
-            self.logger.info("File %s does not exist...Please check...[check_file_and_read]"%(file_name))
-            return ''
-        with open(file_name,'r') as f:
-            output = f.read()
-        if output == "null":
-            self.logger.info("File %s is null, please check..."%(file_name))
-            return ''
-        return output
+    def get_weighted_score(self,stock_id):
+        score_list = self.db.get_stock_score_list(stock_id)
+        ret = 0
+        count = 1
+        for score in score_list:
+            ret = ret+score*count
+            count = count/2
+        return ret
     
     def get_stock_list_from_file(self,file_name):
         '''
@@ -112,20 +110,26 @@ class StockUtil():
 
     def get_summary_status(self,stock_list):
         ret = []
-        title = "  股票名称（股票ID）       | 开盘涨幅  | 当前涨幅  | 当前价格 |    成交量      |   成交金额   |    流通股"
+        title = " 股票名称（股票ID）| 开盘涨幅  | 当前涨幅  | 当前价格 |    成交量      |   成交金额   |     流通股   |     得分"
         ret.append(title)
+        print(stock_list)
         for s in stock_list:
-            status = self.get_live_mon_items(s)            
-            ret.append(status)
+            try:
+                status = self.get_live_mon_items(s)            
+                ret.append(status)
+            except:
+                self.logger.info("Exception on stock:%s"%(s))
         return ret
-    
+
     def get_live_status(self,stock_id):
         ret = ""
-        url = "http://hq.sinajs.cn/list=%s"%(s_list_str)
+        url = "http://hq.sinajs.cn/list=%s"%(stock_id)
+        #self.logger.info(url)
         r = requests.get(url)
         if r.status_code != 200:
-            return ret        
-        ret = r.text
+            return ret
+        re_info = re.compile(r'="(.*)"')
+        ret = re_info.findall(r.text)[0]
         return ret
        
 
@@ -147,13 +151,9 @@ class StockUtil():
         rmb = round(float(info[9])/100000000,2)        
         db = StockDb()        
         float_shares = round(db.get_float_shares_from_id(stock_id)/100000000,2)
-        ret = "%s(%s) | %8s%% | %8s%% | %8s | %8s(万手) | %8s(亿) | %8s(亿)"%(stock_name,stock_id,aoi_open,aoi,info[3],volume,rmb,float_shares)
-        if(aoi>9.7):
-            ret = "└(^o^)┘ %s"%ret
-        elif (aoi>aoi_open and aoi>3):
-            ret = "-($_$)- %s"%ret
-        else:
-            ret = "------- %s"%ret
+        score = round(self.get_weighted_score(stock_id),2)
+        ret = "%s(%s) | %8s%% | %8s%% | %8s | %8s(万手) | %8s(亿) | %8s(亿) | %8s"\
+        %(stock_name,stock_id,aoi_open,aoi,info[3],volume,rmb,float_shares,score) 
         return ret
     
     def get_live_mon_items_bid(self,stock_id):
@@ -167,16 +167,7 @@ class StockUtil():
         ret = "%s(%s) | %s | %s | %s"%(info[0],stock_id,aoi,round(cur_price,2),round(float(info[10])/10000,0))
         return ret       
 
-    def get_live_status(self,stock_id):
-        ret = ""
-        url = "http://hq.sinajs.cn/list=%s"%(stock_id)
-        #self.logger.info(url)
-        r = requests.get(url)
-        if r.status_code != 200:
-            return ret
-        re_info = re.compile(r'="(.*)"')
-        ret = re_info.findall(r.text)[0]
-        return ret
+    
     
     def get_live_price(self,stock_id):
         info = self.get_live_status(stock_id).split(',')
@@ -204,7 +195,6 @@ class StockUtil():
     def get_lift_in_one_day(self,stock_id,day_num):
         pass
 
-
     def get_increase_amount(self,stock_id,day_num):
         pass
 
@@ -220,7 +210,11 @@ class StockUtil():
 if __name__ == '__main__':
     t = StockUtil()    
     #print(t.get_market_status(0,100))
-    print(t.get_stock_trading_dates('sz300751'))
+    stock_list = ['sz002472', 'sh600695', 'sh600462', 'sz002026', 'sz002856', 'sz000609', 'sz300659', 'sz002058', 'sh603106', 'sh603569', 'sh600846', 'sz002798', 'sz000971', 'sh600630', 'sz300234', 'sz300543', 'sz002328', 'sz002164', 'sz002226', 'sz300606', 'sz300636', 'sz002837', 'sh603165', 'sh600624', 'sz002417', 'sh603305', 'sh600283', 'sh600784', 'sz002680', 'sz300541', 'sz300651', 'sh603738', 'sz300607', 'sh603648', 'sh600366', 'sh600165', 'sh600355', 'sh603180', 'sz002288', 'sz002709', 'sh600278', 'sh600621', 'sz002492']
+    print(t.get_summary_status(stock_list))
+    #for s in stock_list:
+    #    print(t.get_live_mon_items(s))
+    #print(t.get_weighted_score('sz300751','2018-11-01'))
     #print(t.get_delta('sz000622',3))
     #print(t.get_last_trading_date())
     #print(t.get_volume('sz000002',0))
