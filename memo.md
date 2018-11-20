@@ -1,3 +1,6 @@
+2018-11-20 update:
+增加了check.py的交互性
+
 2018-11-19 update:
 修改了一下mailer发邮件的逻辑
 

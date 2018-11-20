@@ -95,7 +95,7 @@ class StockMon():
 
     def check_stock_list(self,stock_list):      
         self.logger.info("================Monitor==============")
-        status = self.util.get_summary_status(stock_list)
+        status = '\n'.join(self.util.get_summary_status(stock_list))
         self.logger.info(status)        
 
 

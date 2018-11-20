@@ -112,7 +112,7 @@ class StockUtil():
         ret = []
         title = " 股票名称（股票ID）| 开盘涨幅  | 当前涨幅  | 当前价格 |    成交量      |   成交金额   |     流通股   |     得分"
         ret.append(title)
-        print(stock_list)
+        #print(stock_list)
         for s in stock_list:
             try:
                 status = self.get_live_mon_items(s)            
