@@ -26,7 +26,7 @@ class StockMailer():
         ret.append(stock_status)
         ret.append('=======================\n')
         msg_body = "\n".join(ret)
-        self.msg_body = msg_body
+        self.msg_body = "%s\n%s"(self.msg_body,msg_body)
         self.logger.info(msg_body)
         return msg_body
 
@@ -42,7 +42,8 @@ class StockMailer():
         try:
             msg=MIMEText(msg_body,'plain','utf-8')
             msg['From']=formataddr(["jiazzz",'3100820192@qq.com'])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
-            msg['To']=formataddr(["whoareyou",rcpt])              # 括号里的对应收件人邮箱昵称、收件人邮箱账号
+            msg['To']=','.join(self.rcpt_list)              # 括号里的对应收件人邮箱昵称、收件人邮箱账号
+            self.logger.info("Sending mail to %s"%(msg['To']))
             msg['Subject']="%s-%s"%(msg_subject,self.date)                # 邮件的主题，也可以说是标题
             server=smtplib.SMTP_SSL("smtp.qq.com", 465)  # 发件人邮箱中的SMTP服务器，端口是465
             server.login('3100820192@qq.com','hymygengdhnydhfd')  # 括号中对应的是发件人邮箱账号、邮箱密码

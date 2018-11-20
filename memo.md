@@ -1,5 +1,7 @@
 2018-11-20 update:
 增加了check.py的交互性
+增加了db的缩写（部分）
+fix a bug
 
 2018-11-19 update:
 修改了一下mailer发邮件的逻辑
