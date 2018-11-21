@@ -12,7 +12,7 @@ from pandas import DataFrame
 
 m = StockMon()
 db = StockDb()
-my_list = ['sz000622','sh600604','sz300505','sh603389']
+my_list = ['sz000622','sh600604','sz300505','sh603389','sh603871','sh600345']
 
 def check():
     m = StockMon()    

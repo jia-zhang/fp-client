@@ -26,7 +26,7 @@ class StockMailer():
         ret.append(stock_status)
         ret.append('=======================\n')
         msg_body = "\n".join(ret)
-        self.msg_body = "%s\n%s"(self.msg_body,msg_body)
+        self.msg_body = "%s\n%s"%(self.msg_body,msg_body)
         self.logger.info(msg_body)
         return msg_body
 
