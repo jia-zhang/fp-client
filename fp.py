@@ -65,13 +65,9 @@ def get_potential(s_list):  #只是获取涨幅变大的而已
     #s_list = f.filter_big_lift_within_days(s_list,3,0)
     return s_list
 
-def get_potential_2(s_list):
+def get_potential_2():
     f = StockFilter()   
-    s_list = f.get_big_turnover_within_days(s_list,5,5)
-    s_list = f.get_high_score_list(s_list)
-    s_list = f.get_increase_rate_increase(s_list,3)
-    s_list = f.get_delta_within_days(s_list,7,0)
-    s_list = f.get_delta_within_days(s_list,5,5)
+    s_list = f.get_yd()
     #filter_list = f.get_delta_within_days(s_list,3,10)
     #s_list = list(set(s_list)-set(filter_list))
     #s_list = f.filter_low_score_today(s_list)
@@ -96,7 +92,7 @@ def fp():
     fp_result = []
     fp_result.append(get_top_n(pre_list,10,8)) # 8日内涨幅前10
     fp_result.append(get_potential(pre_list))
-    #fp_result.append(get_potential_2(pre_list))
+    fp_result.append(get_potential_2())
     update_db(fp_result)
     compose_and_send(fp_result)    
 
