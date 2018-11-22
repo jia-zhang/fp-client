@@ -68,8 +68,12 @@ class StockFilter():
         self.logger.info("======End, found %s stocks after calling get_delta_within_days======"%(len(ret)))        
         return ret
     
-    def get_yd():
-        pass
+    def get_yd(self,amp_criteria=10):
+        last_trading_date = self.db.get_last_trading_date()
+        sql_cmd = "select * from (select *,(high-low)*100/low as lift,(high-close)*100/close as lift2 \
+        from tb_daily_info where pchg>3 and date='%s') where lift>%s"%(last_trading_date,amp_criteria)
+        ret = self.db.query_db(sql_cmd)
+        return DataFrame(ret)
     
     def get_big_increase_within_days(self,stock_list,day_num,increase_criteria=9):
         self.logger.info("======Start, Get big increase within %s days======"%(day_num))
