@@ -1,12 +1,11 @@
 import sys
+sys.path.append('./lib')
 import os
-sys.path.append("./lib")
-sys.path.append(".")
-from stock_util import StockUtil
+from lib.stock_util import StockUtil
 import time
 import datetime
-from stock_mon import StockMon
-from stock_db import StockDb
+from lib.stock_mon import StockMon
+from lib.stock_db import StockDb
 import pandas as pd
 from pandas import DataFrame
 
@@ -48,8 +47,6 @@ def usage():
     print("zx:自选股行情\nzdt:涨跌停\nfp:昨日复盘股行情\nsz000002|sh600000:输入代码查看行情\n")
 
 if __name__ == '__main__':       
-    #monitor(file_name,60)
-    #monitor_after_bid(file_name,60)
     while True:
         query_cmd = input("MyStock>")
         try:
@@ -71,4 +68,3 @@ if __name__ == '__main__':
                 os._exit(0)
         except:
             print("Please try again...")
-    #send_sum_mail()

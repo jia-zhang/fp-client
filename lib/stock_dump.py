@@ -47,7 +47,7 @@ class StockDump():
                 df = DataFrame(status)                
                 df1 = df[['code','open','high','low','trade','volume','turnoverratio','changepercent']]    
                 print(df1)
-                df1.to_csv(f,header=False,index=False)
+                df1.to_csv(f,header=False,index=False,mode='a')
         f.close()   
         self.logger.info('Pre-dump from sina done...')
     
@@ -82,7 +82,6 @@ class StockDump():
     def update_db(self,db_name='ss.db'):
         self.logger.info("Start store pre-dumped info to database...")
         db = StockDb(db_name)
-        total_stocks = db.get_stock_list()
         f = open(self.pre_dump_file,'r') 
         last_trading_date = self.get_last_trading_date_live()
         no_data_stocks = []
